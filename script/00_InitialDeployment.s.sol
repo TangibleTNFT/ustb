@@ -11,7 +11,7 @@ import {DeploymentScriptBase} from "./DeploymentScriptBase.sol";
 
 import {USTB} from "../src/USTB.sol";
 
-// FOUNDRY_PROFILE=optimized forge script ./script/001_DeployProxyAdmin.s.sol --rpc-url $RPC_URL --broadcast
+// FOUNDRY_PROFILE=optimized forge script ./script/00_InitialDeployment.s.sol --rpc-url $RPC_URL --broadcast
 contract DeploymentScript is DeploymentScriptBase {
     function run() public broadcast {
         address lzEndpoint;
@@ -56,6 +56,6 @@ contract DeploymentScript is DeploymentScriptBase {
             _deployer // initial index manager
         );
 
-        _deployTransparentProxy(address(ustb), init);
+        _deployTransparentProxy("USTB", address(ustb), init);
     }
 }

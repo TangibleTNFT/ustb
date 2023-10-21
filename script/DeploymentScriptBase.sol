@@ -49,18 +49,24 @@ contract DeploymentScriptBase is Script {
         }
     }
 
-    function _deployTransparentProxy(address implementation, bytes memory data) public returns (address proxyAddress) {
+    function _deployTransparentProxy(string memory forContract, address implementation, bytes memory data)
+        public
+        returns (address proxyAddress)
+    {
         bytes memory bytecode = abi.encodePacked(
             type(TransparentUpgradeableProxy).creationCode, abi.encode(implementation, _proxyAdminAddress, data)
         );
 
-        proxyAddress = computeCreate2Address(_SALT, keccak256(bytecode));
+        bytes32 salt = keccak256(abi.encodePacked(_SALT, forContract));
+
+        proxyAddress = computeCreate2Address(salt, keccak256(bytecode));
 
         if (_isDeployed(proxyAddress)) {
             console.log("Proxy is already deployed to %s", proxyAddress);
         } else {
-            TransparentUpgradeableProxy proxy =
-                new TransparentUpgradeableProxy{salt: _SALT}(implementation, _proxyAdminAddress, data);
+            TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy{
+                salt: salt
+            }(implementation, _proxyAdminAddress, data);
             assert(proxyAddress == address(proxy));
             console.log("Proxy deployed to %s", proxyAddress);
         }
