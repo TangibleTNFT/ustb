@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import {IUSDM} from "./interfaces/IUSDM.sol";
 import {IUSTB} from "./interfaces/IUSTB.sol";
@@ -20,7 +21,7 @@ import {RebaseTokenUpgradeable} from "./RebaseTokenUpgradeable.sol";
  * `mainChain`, and `updateRebaseIndex` to conditionally execute functions. It also allows setting a rebase index
  * manager who has the permission to update the rebase index.
  */
-contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable {
+contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
     using SafeERC20 for IERC20;
 
     address public constant UNDERLYING = 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C;
@@ -54,6 +55,8 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable {
     constructor() {
         _disableInitializers();
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     /**
      * @notice Initializes the USTB contract with essential parameters.

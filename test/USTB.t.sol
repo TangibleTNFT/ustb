@@ -3,8 +3,8 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
-import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
-import "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 import "@layerzerolabs/contracts/lzApp/mocks/LZEndpointMock.sol";
 
@@ -44,19 +44,11 @@ contract USTBTest is Test {
 
         LZEndpointMock lzEndpoint = new LZEndpointMock(mainChainId);
 
-        ProxyAdmin admin = new ProxyAdmin(deployer);
+        ERC1967Proxy mainProxy =
+        new ERC1967Proxy(address(main), abi.encodeWithSelector(USTB.initialize.selector, mainChainId, address(lzEndpoint), indexManager));
 
-        TransparentUpgradeableProxy mainProxy = new TransparentUpgradeableProxy(
-            address(main),
-            address(admin),
-            abi.encodeWithSelector(USTB.initialize.selector, mainChainId, address(lzEndpoint), indexManager)
-        );
-
-        TransparentUpgradeableProxy childProxy = new TransparentUpgradeableProxy(
-            address(child),
-            address(admin),
-            abi.encodeWithSelector(USTB.initialize.selector, sideChainId, address(lzEndpoint), indexManager)
-        );
+        ERC1967Proxy childProxy =
+        new ERC1967Proxy(address(child), abi.encodeWithSelector(USTB.initialize.selector, sideChainId, address(lzEndpoint), indexManager));
 
         ustb = USTB(address(mainProxy));
         ustbChild = USTB(address(childProxy));

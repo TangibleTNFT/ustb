@@ -56,6 +56,6 @@ contract DeploymentScript is DeploymentScriptBase {
             _deployer // initial index manager
         );
 
-        _deployTransparentProxy("USTB", address(ustb), init);
+        _deployProxy("USTB", address(ustb), init);
     }
 }
