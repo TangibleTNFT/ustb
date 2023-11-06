@@ -77,13 +77,18 @@ abstract contract RebaseTokenUpgradeable is ERC20Upgradeable {
         RebaseTokenStorage storage $ = _getRebaseTokenStorage();
         if ($.optOut[account] != disable) {
             uint256 balance = balanceOf(account);
-            $.optOut[account] = disable;
             if (balance != 0) {
                 if (disable) {
                     RebaseTokenUpgradeable._update(account, address(0), balance);
-                    ERC20Upgradeable._update(address(0), account, balance);
                 } else {
                     ERC20Upgradeable._update(account, address(0), balance);
+                }
+            }
+            $.optOut[account] = disable;
+            if (balance != 0) {
+                if (disable) {
+                    ERC20Upgradeable._update(address(0), account, balance);
+                } else {
                     RebaseTokenUpgradeable._update(address(0), account, balance);
                 }
             }
@@ -190,8 +195,10 @@ abstract contract RebaseTokenUpgradeable is ERC20Upgradeable {
 
     /**
      * @notice Updates the state of the contract during token transfers, mints, or burns.
-     * @dev This function adjusts the `totalShares` and individual `shares` of `from` and `to` addresses based on the
-     * rebasing status (`optOut`). It performs overflow and underflow checks where necessary.
+     * @dev This function adjusts the `totalShares` and individual `shares` of `from` and `to` addresses based on their
+     * rebasing status (`optOut`). When both parties have opted out of rebasing, the standard ERC20 `_update` is called
+     * instead. It performs overflow and underflow checks where necessary and delegates to the parent function when
+     * opt-out applies.
      *
      * @param from The address from which tokens are transferred or burned. Address(0) implies minting.
      * @param to The address to which tokens are transferred or minted. Address(0) implies burning.
@@ -199,34 +206,51 @@ abstract contract RebaseTokenUpgradeable is ERC20Upgradeable {
      */
     function _update(address from, address to, uint256 amount) internal virtual override {
         RebaseTokenStorage storage $ = _getRebaseTokenStorage();
+        if ($.optOut[from] && $.optOut[to]) {
+            ERC20Upgradeable._update(from, to, amount);
+            return;
+        }
         uint256 index = $.rebaseIndex;
         uint256 shares = amount.toShares($.rebaseIndex);
         if (from == address(0)) {
-            uint256 totalShares = $.totalShares + shares; // Overflow check required
-            _checkRebaseOverflow(totalShares, index);
-            $.totalShares = totalShares;
+            if (!$.optOut[to]) {
+                uint256 totalShares = $.totalShares + shares; // Overflow check required
+                _checkRebaseOverflow(totalShares, index);
+                $.totalShares = totalShares;
+            }
         } else {
-            shares = _transferableShares(amount, from);
-            unchecked {
-                // Underflow not possible: `shares <= $.shares[from] <= totalShares`.
-                $.shares[from] -= shares;
+            if ($.optOut[from]) {
+                ERC20Upgradeable._update(from, address(0), amount);
+            } else {
+                shares = _transferableShares(amount, from);
+                unchecked {
+                    // Underflow not possible: `shares <= $.shares[from] <= totalShares`.
+                    $.shares[from] -= shares;
+                }
             }
         }
 
         if (to == address(0)) {
-            unchecked {
-                // Underflow not possible: `shares <= $.totalShares` or `shares <= $.shares[from] <= $.totalShares`.
-                $.totalShares -= shares;
+            if (!$.optOut[from]) {
+                unchecked {
+                    // Underflow not possible: `shares <= $.totalShares` or `shares <= $.shares[from] <= $.totalShares`.
+                    $.totalShares -= shares;
+                }
+                emit Transfer(from, address(0), shares.toTokens(index));
             }
         } else {
-            unchecked {
-                // Overflow not possible: `$.shares[to] + shares` is at most `$.totalShares`, which we know fits into a
-                // `uint256`.
-                $.shares[to] += shares;
+            if ($.optOut[to]) {
+                // At this point we know that `from` has not opted out.
+                ERC20Upgradeable._update(address(0), to, amount);
+            } else {
+                unchecked {
+                    // Overflow not possible: `$.shares[to] + shares` is at most `$.totalShares`, which we know fits
+                    // into a `uint256`.
+                    $.shares[to] += shares;
+                }
+                emit Transfer($.optOut[from] ? address(0) : from, to, shares.toTokens(index));
             }
         }
-
-        emit Transfer(from, to, amount);
     }
 
     /**

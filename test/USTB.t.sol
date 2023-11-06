@@ -19,6 +19,7 @@ contract USTBTest is Test {
     address deployer = makeAddr("deployer");
     address indexManager = makeAddr("rebase index manager");
     address alice = makeAddr("alice");
+    address bob = makeAddr("bob");
 
     address usdmHolder = 0xeF9A3cE48678D7e42296166865736899C3638B0E;
     address usdmController = 0xD20D492bC338ab234E6970C4B15178bcD429c01C;
@@ -31,6 +32,7 @@ contract USTBTest is Test {
 
         deal(deployer, 100 ether);
         deal(alice, 100 ether);
+        deal(bob, 100 ether);
 
         vm.startPrank(deployer);
 
@@ -215,5 +217,127 @@ contract USTBTest is Test {
         );
         assertApproxEqAbs(ustb.balanceOf(usdmHolder), 1e18, 5);
         assertEq(ustbChild.balanceOf(alice), 0);
+    }
+
+    function test_transfer_rebaseToRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+        usdm.transfer(bob, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(alice, 100e18);
+
+        vm.startPrank(bob);
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(bob, 100e18);
+
+        vm.roll(18349000);
+        vm.startPrank(usdmController);
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
+        assert(success);
+
+        vm.startPrank(indexManager);
+        ustb.setRebaseIndex(0, 0); // force update
+
+        vm.startPrank(alice);
+        uint256 balance = ustb.balanceOf(alice);
+        ustb.transfer(bob, balance);
+
+        assertEq(ustb.balanceOf(alice), 0);
+        assertApproxEqAbs(ustb.balanceOf(bob), balance + balance, 1);
+    }
+
+    function test_transfer_rebaseToNonRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+        usdm.transfer(bob, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(alice, 100e18);
+
+        vm.startPrank(bob);
+        usdm.approve(address(ustb), 100e18);
+        ustb.disableRebase(bob, true);
+        ustb.mint(bob, 100e18);
+
+        vm.roll(18349000);
+        vm.startPrank(usdmController);
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
+        assert(success);
+
+        vm.startPrank(indexManager);
+        ustb.setRebaseIndex(0, 0); // force update
+
+        vm.startPrank(alice);
+        uint256 balance1 = ustb.balanceOf(alice);
+        uint256 balance2 = ustb.balanceOf(bob);
+        ustb.transfer(bob, balance1);
+
+        assertEq(ustb.balanceOf(alice), 0);
+        assertApproxEqAbs(ustb.balanceOf(bob), balance1 + balance2, 1);
+    }
+
+    function test_transfer_nonRebaseToRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+        usdm.transfer(bob, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+        ustb.disableRebase(alice, true);
+        ustb.mint(alice, 100e18);
+
+        vm.startPrank(bob);
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(bob, 100e18);
+
+        vm.roll(18349000);
+        vm.startPrank(usdmController);
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
+        assert(success);
+
+        vm.startPrank(indexManager);
+        ustb.setRebaseIndex(0, 0); // force update
+
+        vm.startPrank(alice);
+        uint256 balance1 = ustb.balanceOf(alice);
+        uint256 balance2 = ustb.balanceOf(bob);
+        ustb.transfer(bob, balance1);
+
+        assertEq(ustb.balanceOf(alice), 0);
+        assertApproxEqAbs(ustb.balanceOf(bob), balance1 + balance2, 1);
+    }
+
+    function test_transfer_nonRebaseToNonRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+        usdm.transfer(bob, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+        ustb.disableRebase(alice, true);
+        ustb.mint(alice, 100e18);
+
+        vm.startPrank(bob);
+        usdm.approve(address(ustb), 100e18);
+        ustb.disableRebase(bob, true);
+        ustb.mint(bob, 100e18);
+
+        vm.roll(18349000);
+        vm.startPrank(usdmController);
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
+        assert(success);
+
+        vm.startPrank(indexManager);
+        ustb.setRebaseIndex(0, 0); // force update
+
+        vm.startPrank(alice);
+        uint256 balance = ustb.balanceOf(alice);
+        ustb.transfer(bob, balance);
+
+        assertEq(ustb.balanceOf(alice), 0);
+        assertApproxEqAbs(ustb.balanceOf(bob), balance + balance, 1);
     }
 }
