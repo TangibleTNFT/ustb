@@ -39,7 +39,7 @@ abstract contract LzAppUpgradeable is OwnableUpgradeable, ILayerZeroReceiver, IL
     using BytesLib for bytes;
 
     // ua can not send payload larger than this by default, but it can be changed by the ua owner
-    uint256 public constant DEFAULT_PAYLOAD_SIZE_LIMIT = 10000;
+    uint256 public constant DEFAULT_PAYLOAD_SIZE_LIMIT = 10_000;
 
     event SetPrecrime(address precrime);
     event SetTrustedRemote(uint16 _remoteChainId, bytes _path);
