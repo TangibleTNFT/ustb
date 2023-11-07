@@ -101,7 +101,7 @@ abstract contract LayerZeroRebaseTokenUpgradeable is CrossChainRebaseTokenUpgrad
         if (from != msg.sender) {
             _spendAllowance(from, msg.sender, amount);
         }
-        if (isMainChain()) {
+        if (isMainChain) {
             _update(from, address(this), amount);
         } else {
             _update(from, address(0), amount);
@@ -121,7 +121,7 @@ abstract contract LayerZeroRebaseTokenUpgradeable is CrossChainRebaseTokenUpgrad
      */
     function _creditTo(uint16, address to, uint256 shares) internal override returns (uint256 amount) {
         amount = shares.toTokens(rebaseIndex());
-        if (isMainChain()) {
+        if (isMainChain) {
             _update(address(this), to, amount);
         } else {
             _update(address(0), to, amount);
@@ -182,7 +182,7 @@ abstract contract LayerZeroRebaseTokenUpgradeable is CrossChainRebaseTokenUpgrad
     function _sendAck(uint16 srcChainId, bytes memory, uint64, bytes memory payload) internal override {
         (, bytes memory toAddressBytes, Message memory message) = abi.decode(payload, (uint16, bytes, Message));
 
-        if (!isMainChain()) {
+        if (!isMainChain) {
             _setRebaseIndex(message.rebaseIndex, message.nonce);
         }
 

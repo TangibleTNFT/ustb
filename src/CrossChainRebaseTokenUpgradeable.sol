@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ICrossChain} from "./interfaces/ICrossChain.sol";
+import {CrossChainToken} from "./CrossChainToken.sol";
 import {RebaseTokenUpgradeable} from "./RebaseTokenUpgradeable.sol";
 
 /**
@@ -18,7 +18,7 @@ import {RebaseTokenUpgradeable} from "./RebaseTokenUpgradeable.sol";
  *
  * It also includes functions for nonce management and verification.
  */
-abstract contract CrossChainRebaseTokenUpgradeable is RebaseTokenUpgradeable, ICrossChain {
+abstract contract CrossChainRebaseTokenUpgradeable is RebaseTokenUpgradeable, CrossChainToken {
     /// @custom:storage-location erc7201:tangible.storage.CrossChainRebaseToken
     struct CrossChainRebaseTokenStorage {
         uint256 nonce;

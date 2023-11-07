@@ -7,6 +7,7 @@ import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/U
 
 import {IUSDM} from "./interfaces/IUSDM.sol";
 import {IUSTB} from "./interfaces/IUSTB.sol";
+import {CrossChainToken} from "./CrossChainToken.sol";
 import {LayerZeroRebaseTokenUpgradeable} from "./LayerZeroRebaseTokenUpgradeable.sol";
 import {RebaseTokenUpgradeable} from "./RebaseTokenUpgradeable.sol";
 
@@ -41,9 +42,6 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
         }
     }
 
-    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    bool private immutable _isMainChain;
-
     event RebaseIndexManagerUpdated(address manager);
 
     error InvalidZeroAddress();
@@ -59,9 +57,9 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
         _;
     }
 
-    modifier mainChain(bool isMainChain_) {
+    modifier mainChain(bool _isMainChain) {
         USTBStorage storage $ = _getUSTBStorage();
-        if (_isMainChain != isMainChain_) {
+        if (isMainChain != _isMainChain) {
             revert UnsupportedChain(block.chainid);
         }
         _;
@@ -72,8 +70,7 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @param endpoint The Layer Zero endpoint for cross-chain operations.
      * @custom:oz-upgrades-unsafe-allow constructor
      */
-    constructor(uint256 mainChainId, address endpoint) LayerZeroRebaseTokenUpgradeable(endpoint) {
-        _isMainChain = mainChainId == block.chainid;
+    constructor(uint256 mainChainId, address endpoint) CrossChainToken(mainChainId) LayerZeroRebaseTokenUpgradeable(endpoint) {
         _disableInitializers();
     }
 
@@ -88,7 +85,7 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      */
     function initialize(address indexManager) external initializer {
         __LayerZeroRebaseToken_init(msg.sender, "US T-Bill", "USTB");
-        if (_isMainChain) {
+        if (isMainChain) {
             refreshRebaseIndex();
         } else {
             setRebaseIndex(1 ether, 1);
@@ -150,10 +147,6 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
         _rebaseIndexManager = $.rebaseIndexManager;
     }
 
-    function isMainChain() public view override returns (bool isMainChain_) {
-        isMainChain_ = _isMainChain;
-    }
-
     /**
      * @notice Sets the rebase index and its corresponding nonce on non-main chains.
      * @dev This function allows the rebase index manager to manually update the rebase index and nonce when not on the
@@ -179,7 +172,7 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * `setRebaseIndex`.
      */
     function refreshRebaseIndex() public {
-        if (_isMainChain) {
+        if (isMainChain) {
             uint256 currentIndex = IUSDM(UNDERLYING).rewardMultiplier();
             if (currentIndex != rebaseIndex()) {
                 _setRebaseIndex(currentIndex, block.number);
