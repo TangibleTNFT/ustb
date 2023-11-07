@@ -26,9 +26,21 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
 
     address public constant UNDERLYING = 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C;
 
-    address public rebaseIndexManager;
+    /// @custom:storage-location erc7201:tangible.storage.USTB
+    struct USTBStorage {
+        address rebaseIndexManager;
+        bool isMainChain;
+    }
 
-    bool private _isMainChain;
+    // keccak256(abi.encode(uint256(keccak256("tangible.storage.USTB")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant USTBStorageLocation = 0x56cb630b12f1f031f72de1d734e98085323517cc6515c1c85452dc02f218dd00;
+
+    function _getUSTBStorage() private pure returns (USTBStorage storage $) {
+        // slither-disable-next-line assembly
+        assembly {
+            $.slot := USTBStorageLocation
+        }
+    }
 
     event RebaseIndexManagerUpdated(address manager);
 
@@ -38,14 +50,16 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
     error ValueUnchanged();
 
     modifier onlyIndexManager() {
-        if (msg.sender != rebaseIndexManager && !_isInitializing()) {
+        USTBStorage storage $ = _getUSTBStorage();
+        if (msg.sender != $.rebaseIndexManager && !_isInitializing()) {
             revert NotAuthorized(msg.sender);
         }
         _;
     }
 
-    modifier mainChain(bool isMainChain_) {
-        if (_isMainChain != isMainChain_) {
+    modifier mainChain(bool _isMainChain) {
+        USTBStorage storage $ = _getUSTBStorage();
+        if ($.isMainChain != _isMainChain) {
             revert UnsupportedChain(block.chainid);
         }
         _;
@@ -68,8 +82,9 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @param indexManager The address that will manage the rebase index.
      */
     function initialize(uint256 mainChainId, address endpoint, address indexManager) external initializer {
+        USTBStorage storage $ = _getUSTBStorage();
         __LayerZeroRebaseToken_init(msg.sender, endpoint, "US T-Bill", "USTB");
-        _isMainChain = block.chainid == mainChainId;
+        $.isMainChain = block.chainid == mainChainId;
         setRebaseIndex(1 ether, 1);
         setRebaseIndexManager(indexManager);
     }
@@ -110,7 +125,8 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @param disable A boolean flag indicating whether to disable (true) or enable (false) rebasing for the account.
      */
     function disableRebase(address account, bool disable) external {
-        if (msg.sender != account && msg.sender != rebaseIndexManager) {
+        USTBStorage storage $ = _getUSTBStorage();
+        if (msg.sender != account && msg.sender != $.rebaseIndexManager) {
             revert NotAuthorized(msg.sender);
         }
         if (_isRebaseDisabled(account) == disable) {
@@ -119,8 +135,14 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
         _disableRebase(account, disable);
     }
 
-    function isMainChain() public view override returns (bool isMainChain_) {
-        isMainChain_ = _isMainChain;
+    function rebaseIndexManager() external view override returns (address _rebaseIndexManager) {
+        USTBStorage storage $ = _getUSTBStorage();
+        _rebaseIndexManager = $.rebaseIndexManager;
+    }
+
+    function isMainChain() public view override returns (bool _isMainChain) {
+        USTBStorage storage $ = _getUSTBStorage();
+        _isMainChain = $.isMainChain;
     }
 
     /**
@@ -134,7 +156,8 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @return rebaseIndex The new rebase index.
      */
     function setRebaseIndex(uint256 index, uint256 nonce) public onlyIndexManager returns (uint256 rebaseIndex) {
-        if (_isMainChain) {
+        USTBStorage storage $ = _getUSTBStorage();
+        if ($.isMainChain) {
             rebaseIndex = IUSDM(UNDERLYING).rewardMultiplier();
             nonce = block.number;
         } else {
@@ -154,7 +177,8 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
         if (manager == address(0)) {
             revert InvalidZeroAddress();
         }
-        rebaseIndexManager = manager;
+        USTBStorage storage $ = _getUSTBStorage();
+        $.rebaseIndexManager = manager;
         emit RebaseIndexManagerUpdated(manager);
     }
 
@@ -169,7 +193,8 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @param amount The amount of tokens being transferred, minted, or burned.
      */
     function _update(address from, address to, uint256 amount) internal virtual override {
-        if (_isMainChain) {
+        USTBStorage storage $ = _getUSTBStorage();
+        if ($.isMainChain) {
             uint256 currentIndex = IUSDM(UNDERLYING).rewardMultiplier();
             if (currentIndex != rebaseIndex()) {
                 _setRebaseIndex(currentIndex, block.number);
