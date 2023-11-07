@@ -163,21 +163,23 @@ abstract contract LayerZeroRebaseTokenUpgradeable is CrossChainRebaseTokenUpgrad
     }
 
     /**
-     * @notice Acknowledges the receipt of tokens from another chain.
-     * @dev This function is called to handle the tokens that have been sent from a different chain. It decodes the
-     * payload to get the message containing shares, rebase index, and nonce. If the operation occurs on the main chain,
-     * it verifies that the nonce is not greater than the current nonce. Otherwise, it updates the rebase index and
-     * nonce based on the received message.
+     * @notice Acknowledges the receipt of tokens from another chain and credits the correct amount to the recipient's
+     * address.
+     * @dev Upon receiving a payload, this function decodes it to extract the destination address and the message
+     * content, which includes shares, rebase index, and nonce. If the current chain is not the main chain, it updates
+     * the rebase index and nonce accordingly. Then, it credits the token shares to the recipient's address and emits a
+     * `ReceiveFromChain` event.
+     *
+     * The function assumes that `_setRebaseIndex` handles the correctness of the rebase index and nonce update.
      *
      * @param srcChainId The source chain ID from which tokens are received.
-     * @param payload The payload containing the message and other details.
+     * @param payload The payload containing the encoded destination address and message with shares, rebase index, and
+     * nonce.
      */
     function _sendAck(uint16 srcChainId, bytes memory, uint64, bytes memory payload) internal override {
         (, bytes memory toAddressBytes, Message memory message) = abi.decode(payload, (uint16, bytes, Message));
 
-        if (isMainChain()) {
-            assert(message.nonce <= _rebaseNonce());
-        } else {
+        if (!isMainChain()) {
             _setRebaseIndex(message.rebaseIndex, message.nonce);
         }
 

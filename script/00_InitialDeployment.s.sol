@@ -36,7 +36,8 @@ contract DeploymentScript is DeploymentScriptBase {
 
         bytes memory bytecode = abi.encodePacked(type(USTB).creationCode);
 
-        address ustbAddress = computeCreate2Address(_SALT, keccak256(bytecode));
+        address ustbAddress =
+            computeCreate2Address(_SALT, keccak256(abi.encodePacked(bytecode, abi.encode(getChain("mainnet").chainId))));
 
         USTB ustb;
 
@@ -44,14 +45,13 @@ contract DeploymentScript is DeploymentScriptBase {
             console.log("USTB is already deployed to %s", ustbAddress);
             ustb = USTB(ustbAddress);
         } else {
-            ustb = new USTB{salt: _SALT}();
+            ustb = new USTB{salt: _SALT}(getChain("mainnet").chainId);
             assert(ustbAddress == address(ustb));
             console.log("USTB deployed to %s", ustbAddress);
         }
 
         bytes memory init = abi.encodeWithSelector(
             USTB.initialize.selector,
-            getChain("mainnet").chainId, // main chain id
             lzEndpoint, // LayerZero endpoint
             _deployer // initial index manager
         );

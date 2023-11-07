@@ -28,7 +28,7 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
 
     address public rebaseIndexManager;
 
-    bool private _isMainChain;
+    bool private immutable _isMainChain;
 
     event RebaseIndexManagerUpdated(address manager);
 
@@ -51,8 +51,12 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
         _;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    /**
+     * @param mainChainId The chain ID that represents the main chain.
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor(uint256 mainChainId) {
+        _isMainChain = mainChainId == block.chainid;
         _disableInitializers();
     }
 
@@ -60,17 +64,19 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
 
     /**
      * @notice Initializes the USTB contract with essential parameters.
-     * @dev This function sets the initial LayerZero endpoint, the rebase index manager, and whether the contract is on
-     * the main chain. It also calls `__LayerZeroRebaseToken_init` for further initialization.
+     * @dev This function sets the initial LayerZero endpoint and the rebase index manager. It also calls
+     * `__LayerZeroRebaseToken_init` for further initialization.
      *
-     * @param mainChainId The chain ID that represents the main chain.
      * @param endpoint The Layer Zero endpoint for cross-chain operations.
      * @param indexManager The address that will manage the rebase index.
      */
-    function initialize(uint256 mainChainId, address endpoint, address indexManager) external initializer {
+    function initialize(address endpoint, address indexManager) external initializer {
         __LayerZeroRebaseToken_init(msg.sender, endpoint, "US T-Bill", "USTB");
-        _isMainChain = block.chainid == mainChainId;
-        setRebaseIndex(1 ether, 1);
+        if (_isMainChain) {
+            refreshRebaseIndex();
+        } else {
+            setRebaseIndex(1 ether, 1);
+        }
         setRebaseIndexManager(indexManager);
     }
 
@@ -124,23 +130,36 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
     }
 
     /**
-     * @notice Sets the rebase index and its corresponding nonce.
-     * @dev This function allows the rebase index manager to update the rebase index. On the main chain, the index and
-     * nonce are automatically set based on the underlying asset and the current block number. On other chains, the
-     * index and nonce are explicitly set.
+     * @notice Sets the rebase index and its corresponding nonce on non-main chains.
+     * @dev This function allows the rebase index manager to manually update the rebase index and nonce when not on the
+     * main chain. The main chain manages the rebase index automatically within `refreshRebaseIndex`. It should only be
+     * used on non-main chains to align them with the main chain's state.
      *
-     * @param index The new rebase index.
+     * Reverts if called on the main chain due to the `mainChain(false)` modifier.
+     *
+     * @param index The new rebase index to set.
      * @param nonce The new nonce corresponding to the rebase index.
-     * @return rebaseIndex The new rebase index.
      */
-    function setRebaseIndex(uint256 index, uint256 nonce) public onlyIndexManager returns (uint256 rebaseIndex) {
+    function setRebaseIndex(uint256 index, uint256 nonce) public onlyIndexManager mainChain(false) {
+        _setRebaseIndex(index, nonce);
+    }
+
+    /**
+     * @notice Updates the rebase index to the current index from the underlying asset on the main chain.
+     * @dev Automatically refreshes the rebase index by querying the current reward multiplier from the underlying asset
+     * contract. This can only affect the rebase index on the main chain. If the current index from the underlying
+     * differs from the stored rebase index, it updates the rebase index and sets the current block number as the nonce.
+     *
+     * This function does not have effect on non-main chains as their rebase index and nonce are managed through
+     * `setRebaseIndex`.
+     */
+    function refreshRebaseIndex() public {
         if (_isMainChain) {
-            rebaseIndex = IUSDM(UNDERLYING).rewardMultiplier();
-            nonce = block.number;
-        } else {
-            rebaseIndex = index;
+            uint256 currentIndex = IUSDM(UNDERLYING).rewardMultiplier();
+            if (currentIndex != rebaseIndex()) {
+                _setRebaseIndex(currentIndex, block.number);
+            }
         }
-        _setRebaseIndex(rebaseIndex, nonce);
     }
 
     /**
@@ -169,12 +188,7 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @param amount The amount of tokens being transferred, minted, or burned.
      */
     function _update(address from, address to, uint256 amount) internal virtual override {
-        if (_isMainChain) {
-            uint256 currentIndex = IUSDM(UNDERLYING).rewardMultiplier();
-            if (currentIndex != rebaseIndex()) {
-                _setRebaseIndex(currentIndex, block.number);
-            }
-        }
+        refreshRebaseIndex();
         super._update(from, to, amount);
     }
 }
