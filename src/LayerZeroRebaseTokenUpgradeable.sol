@@ -156,7 +156,7 @@ abstract contract LayerZeroRebaseTokenUpgradeable is CrossChainRebaseTokenUpgrad
             nonce: _rebaseNonce()
         });
 
-        emit SendToChain(dstChainId, from, toAddress, amount);
+        emit SendToChain(dstChainId, from, toAddress, message.shares.toTokens(message.rebaseIndex));
 
         bytes memory lzPayload = abi.encode(PT_SEND, toAddress, message);
         _lzSend(dstChainId, lzPayload, refundAddress, zroPaymentAddress, adapterParams, msg.value);
