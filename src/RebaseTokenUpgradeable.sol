@@ -47,6 +47,7 @@ abstract contract RebaseTokenUpgradeable is ERC20Upgradeable {
     event RebaseDisabled(address indexed account);
 
     error AmountExceedsBalance(address account, uint256 balance, uint256 amount);
+    error RebaseOverflow();
 
     /**
      * @notice Initializes the RebaseTokenUpgradeable contract.
@@ -239,8 +240,12 @@ abstract contract RebaseTokenUpgradeable is ERC20Upgradeable {
      * @param index The current rebase index.
      */
     function _checkRebaseOverflow(uint256 shares, uint256 index) private view {
-        // The condition inside `assert()` can never evaluate `false`, but `toTokens()` would throw an arithmetic
-        // exception in case we overflow, and that's all we need.
-        assert(shares.toTokens(index) + ERC20Upgradeable.totalSupply() <= type(uint256).max);
+        // Using an unchecked block to avoid overflow checks, as overflow will be handled explicitly.
+        uint256 _elasticSupply = shares.toTokens(index);
+        unchecked {
+            if (_elasticSupply + ERC20Upgradeable.totalSupply() < _elasticSupply) {
+                revert RebaseOverflow();
+            }
+        }
     }
 }
