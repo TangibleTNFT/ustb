@@ -36,24 +36,27 @@ abstract contract LayerZeroRebaseTokenUpgradeable is CrossChainRebaseTokenUpgrad
     }
 
     /**
+     * @param endpoint The endpoint for Layer Zero operations.
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor(address endpoint) OFTUpgradeable(endpoint) {}
+
+    /**
      * @notice Initializes the LayerZeroRebaseTokenUpgradeable contract.
      * @dev This function is intended to be called once during the contract's deployment. It chains initialization logic
      * from `__LayerZeroRebaseToken_init_unchained`, `__CrossChainRebaseToken_init_unchained`, and `__OFT_init`.
      *
      * @param initialOwner The initial owner of the token contract.
-     * @param endpoint The endpoint for Layer Zero operations.
      * @param name The name of the token.
      * @param symbol The symbol of the token.
      */
-    function __LayerZeroRebaseToken_init(
-        address initialOwner,
-        address endpoint,
-        string memory name,
-        string memory symbol
-    ) internal onlyInitializing {
+    function __LayerZeroRebaseToken_init(address initialOwner, string memory name, string memory symbol)
+        internal
+        onlyInitializing
+    {
         __LayerZeroRebaseToken_init_unchained();
         __CrossChainRebaseToken_init_unchained();
-        __OFT_init(initialOwner, endpoint, name, symbol);
+        __OFT_init(initialOwner, name, symbol);
     }
 
     function __LayerZeroRebaseToken_init_unchained() internal onlyInitializing {}

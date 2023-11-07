@@ -37,6 +37,12 @@ abstract contract NonblockingLzAppUpgradeable is LzAppUpgradeable {
     }
 
     /**
+     * @param endpoint The address of the LayerZero endpoint contract.
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor(address endpoint) LzAppUpgradeable(endpoint) {}
+
+    /**
      * @dev Initializes the contract, setting the initial owner and endpoint addresses.
      * Also chains the initialization process with the base `LzAppUpgradeable` contract.
      *
@@ -44,11 +50,10 @@ abstract contract NonblockingLzAppUpgradeable is LzAppUpgradeable {
      * - Can only be called during contract initialization.
      *
      * @param initialOwner The address that will initially own the contract.
-     * @param endpoint The address of the LayerZero endpoint contract.
      */
-    function __NonblockingLzApp_init(address initialOwner, address endpoint) internal onlyInitializing {
+    function __NonblockingLzApp_init(address initialOwner) internal onlyInitializing {
         __NonblockingLzApp_init_unchained();
-        __LzApp_init(initialOwner, endpoint);
+        __LzApp_init(initialOwner);
     }
 
     function __NonblockingLzApp_init_unchained() internal onlyInitializing {}

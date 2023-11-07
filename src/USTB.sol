@@ -51,8 +51,11 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
         _;
     }
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
+    /**
+     * @param endpoint The Layer Zero endpoint for cross-chain operations.
+     * @custom:oz-upgrades-unsafe-allow constructor
+     */
+    constructor(address endpoint) LayerZeroRebaseTokenUpgradeable(endpoint) {
         _disableInitializers();
     }
 
@@ -64,11 +67,10 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * the main chain. It also calls `__LayerZeroRebaseToken_init` for further initialization.
      *
      * @param mainChainId The chain ID that represents the main chain.
-     * @param endpoint The Layer Zero endpoint for cross-chain operations.
      * @param indexManager The address that will manage the rebase index.
      */
-    function initialize(uint256 mainChainId, address endpoint, address indexManager) external initializer {
-        __LayerZeroRebaseToken_init(msg.sender, endpoint, "US T-Bill", "USTB");
+    function initialize(uint256 mainChainId, address indexManager) external initializer {
+        __LayerZeroRebaseToken_init(msg.sender, "US T-Bill", "USTB");
         _isMainChain = block.chainid == mainChainId;
         setRebaseIndex(1 ether, 1);
         setRebaseIndexManager(indexManager);
