@@ -113,6 +113,8 @@ contract DeploymentScriptBase is Script {
             if (_implementation != implementation) {
                 UUPSUpgradeable(address(proxy)).upgradeToAndCall(implementation, data);
                 console.log("%s proxy at %s has been upgraded", forContract, proxyAddress);
+            } else {
+                console.log("%s proxy at %s remains unchanged", forContract, proxyAddress);
             }
         } else {
             ERC1967Proxy proxy = new ERC1967Proxy{

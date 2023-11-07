@@ -16,9 +16,7 @@ contract DeploymentScript is DeploymentScriptBase {
     function run() public broadcast {
         address lzEndpoint;
 
-        if (block.chainid == getChain("anvil").chainId) {
-            lzEndpoint = address(0);
-        } else if (block.chainid == getChain("mainnet").chainId) {
+        if (block.chainid == getChain("mainnet").chainId) {
             lzEndpoint = 0x66A71Dcef29A0fFBDBE3c6a460a3B5BC225Cd675;
         } else if (block.chainid == getChain("bnb_smart_chain").chainId) {
             lzEndpoint = 0x3c2269811836af69497E5F486A85D7316753cf62;
@@ -36,7 +34,8 @@ contract DeploymentScript is DeploymentScriptBase {
 
         bytes memory bytecode = abi.encodePacked(type(USTB).creationCode);
 
-        address ustbAddress = computeCreate2Address(_SALT, keccak256(bytecode));
+        address ustbAddress =
+            computeCreate2Address(_SALT, keccak256(abi.encodePacked(bytecode, abi.encode(getChain("mainnet").chainId, lzEndpoint))));
 
         USTB ustb;
 
@@ -44,15 +43,13 @@ contract DeploymentScript is DeploymentScriptBase {
             console.log("USTB is already deployed to %s", ustbAddress);
             ustb = USTB(ustbAddress);
         } else {
-            ustb = new USTB{salt: _SALT}();
+            ustb = new USTB{salt: _SALT}(getChain("mainnet").chainId, lzEndpoint);
             assert(ustbAddress == address(ustb));
             console.log("USTB deployed to %s", ustbAddress);
         }
 
         bytes memory init = abi.encodeWithSelector(
             USTB.initialize.selector,
-            getChain("mainnet").chainId, // main chain id
-            lzEndpoint, // LayerZero endpoint
             _deployer // initial index manager
         );
 

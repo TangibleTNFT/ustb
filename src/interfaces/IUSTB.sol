@@ -9,7 +9,7 @@ interface IUSTB is IERC20 {
 
     function disableRebase(address account, bool disable) external;
 
-    function setRebaseIndex(uint256 index, uint256 nonce) external returns (uint256 rebaseIndex);
+    function setRebaseIndex(uint256 index, uint256 nonce) external;
     function setRebaseIndexManager(address manager) external;
 
     function rebaseIndexManager() external returns (address manager);
