@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {StorageSlot} from "@openzeppelin/contracts/utils/StorageSlot.sol";
 import {ExcessivelySafeCall} from "@layerzerolabs/contracts/libraries/ExcessivelySafeCall.sol";
 
 import {LzAppUpgradeable} from "./LzAppUpgradeable.sol";
@@ -167,15 +168,23 @@ abstract contract NonblockingLzAppUpgradeable is LzAppUpgradeable {
         payable
         virtual
     {
-        NonblockingLzAppStorage storage $ = _getNonblockingLzAppStorage();
+        // manually compute the storage slot for $.failedMessages[srcChainId][srcAddress][nonce]
+        bytes32 slot = keccak256(abi.encode(srcChainId, NonblockingLzAppStorageLocation));
+        slot = keccak256(abi.encode(srcAddress, slot));
+        slot = keccak256(abi.encode(nonce, slot));
+
+        // get a bytes32 pointer to the storage slot
+        StorageSlot.Bytes32Slot storage payloadHash = StorageSlot.getBytes32Slot(slot);
+
         // assert there is message to retry
-        bytes32 payloadHash = $.failedMessages[srcChainId][srcAddress][nonce];
-        require(payloadHash != bytes32(0), "NonblockingLzApp: no stored message");
-        require(keccak256(payload) == payloadHash, "NonblockingLzApp: invalid payload");
+        require(payloadHash.value != bytes32(0), "NonblockingLzApp: no stored message");
+        require(keccak256(payload) == payloadHash.value, "NonblockingLzApp: invalid payload");
+
         // clear the stored message
-        $.failedMessages[srcChainId][srcAddress][nonce] = bytes32(0);
+        payloadHash.value = bytes32(0);
+
         // execute the message. revert if it fails again
         _nonblockingLzReceive(srcChainId, srcAddress, nonce, payload);
-        emit RetryMessageSuccess(srcChainId, srcAddress, nonce, payloadHash);
+        emit RetryMessageSuccess(srcChainId, srcAddress, nonce, payloadHash.value);
     }
 }
