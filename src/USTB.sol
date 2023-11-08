@@ -5,11 +5,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
+import {CrossChainToken} from "@tangible/tokens/CrossChainToken.sol";
+import {LayerZeroRebaseTokenUpgradeable} from "@tangible/tokens/LayerZeroRebaseTokenUpgradeable.sol";
+import {RebaseTokenUpgradeable} from "@tangible/tokens/RebaseTokenUpgradeable.sol";
+
 import {IUSDM} from "./interfaces/IUSDM.sol";
 import {IUSTB} from "./interfaces/IUSTB.sol";
-import {CrossChainToken} from "./CrossChainToken.sol";
-import {LayerZeroRebaseTokenUpgradeable} from "./LayerZeroRebaseTokenUpgradeable.sol";
-import {RebaseTokenUpgradeable} from "./RebaseTokenUpgradeable.sol";
 
 /**
  * @title USTB (US T-Bill)
