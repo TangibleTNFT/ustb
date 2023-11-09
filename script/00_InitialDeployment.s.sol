@@ -34,8 +34,9 @@ contract DeploymentScript is DeploymentScriptBase {
 
         bytes memory bytecode = abi.encodePacked(type(USTB).creationCode);
 
-        address ustbAddress =
-            computeCreate2Address(_SALT, keccak256(abi.encodePacked(bytecode, abi.encode(getChain("mainnet").chainId, lzEndpoint))));
+        address ustbAddress = computeCreate2Address(
+            _SALT, keccak256(abi.encodePacked(bytecode, abi.encode(getChain("mainnet").chainId, lzEndpoint)))
+        );
 
         USTB ustb;
 
