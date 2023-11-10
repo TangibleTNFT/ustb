@@ -14,9 +14,14 @@ bytecode_hash = "none"
 [rpc_endpoints]
 anvil = "http://127.0.0.1:8546"
 mainnet = "${ETHEREUM_RPC_URL}"
+goerli = "${GOERLI_RPC_URL}"
+polygon_mumbai = "${MUMBAI_RPC_URL}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_MAINNET_KEY}" }
+polygon = { key = "${ETHERSCAN_POLYGON_KEY}" }
+goerli = { key = "${ETHERSCAN_MAINNET_KEY}" }
+polygon_mumbai = { key = "${ETHERSCAN_POLYGON_KEY}", url = "https://api-testnet.polygonscan.com/api" }
 
 [fmt]
 wrap_comments = true

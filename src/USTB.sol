@@ -26,7 +26,8 @@ import {IUSTB} from "./interfaces/IUSTB.sol";
 contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
     using SafeERC20 for IERC20;
 
-    address public constant UNDERLYING = 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C;
+    /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
+    address public immutable UNDERLYING;
 
     /// @custom:storage-location erc7201:tangible.storage.USTB
     struct USTBStorage {
@@ -67,14 +68,16 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
     }
 
     /**
+     * @param underlying The address of the underlying asset.
      * @param mainChainId The chain ID that represents the main chain.
      * @param endpoint The Layer Zero endpoint for cross-chain operations.
      * @custom:oz-upgrades-unsafe-allow constructor
      */
-    constructor(uint256 mainChainId, address endpoint)
+    constructor(address underlying, uint256 mainChainId, address endpoint)
         CrossChainToken(mainChainId)
         LayerZeroRebaseTokenUpgradeable(endpoint)
     {
+        UNDERLYING = underlying;
         _disableInitializers();
     }
 

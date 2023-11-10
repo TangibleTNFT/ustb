@@ -11,10 +11,14 @@ import {DeploymentScriptBase} from "./DeploymentScriptBase.sol";
 
 import {USTB} from "../src/USTB.sol";
 
-// FOUNDRY_PROFILE=optimized forge script ./script/00_InitialDeployment.s.sol --rpc-url $RPC_URL --broadcast
+// FOUNDRY_PROFILE=optimized forge script ./script/00_InitialDeployment.s.sol --rpc-url $RPC_URL --broadcast --verify
 contract DeploymentScript is DeploymentScriptBase {
     function run() public broadcast {
         address lzEndpoint;
+
+        address underlying = 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C;
+        uint256 mainChainId = getChain("mainnet").chainId;
+        bool isTestnet;
 
         if (block.chainid == getChain("mainnet").chainId) {
             lzEndpoint = 0x66A71Dcef29A0fFBDBE3c6a460a3B5BC225Cd675;
@@ -29,13 +33,22 @@ contract DeploymentScript is DeploymentScriptBase {
         } else if (block.chainid == getChain("base").chainId) {
             lzEndpoint = 0xb6319cC6c8c27A8F5dAF0dD3DF91EA35C4720dd7;
         } else {
-            revert("No LayerZero endpoint defined for this chain.");
+            isTestnet = true;
+            mainChainId = getChain("goerli").chainId;
+            underlying = 0xe31Cf614fC1C5d3781d9E09bdb2e04134CDebb89;
+            if (block.chainid == getChain("goerli").chainId) {
+                lzEndpoint = 0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23;
+            } else if (block.chainid == getChain("polygon_mumbai").chainId) {
+                lzEndpoint = 0xf69186dfBa60DdB133E91E9A4B5673624293d8F8;
+            } else {
+                revert("No LayerZero endpoint defined for this chain.");
+            }
         }
 
         bytes memory bytecode = abi.encodePacked(type(USTB).creationCode);
 
         address ustbAddress = computeCreate2Address(
-            _SALT, keccak256(abi.encodePacked(bytecode, abi.encode(getChain("mainnet").chainId, lzEndpoint)))
+            _SALT, keccak256(abi.encodePacked(bytecode, abi.encode(underlying, mainChainId, lzEndpoint)))
         );
 
         USTB ustb;
@@ -44,7 +57,7 @@ contract DeploymentScript is DeploymentScriptBase {
             console.log("USTB is already deployed to %s", ustbAddress);
             ustb = USTB(ustbAddress);
         } else {
-            ustb = new USTB{salt: _SALT}(getChain("mainnet").chainId, lzEndpoint);
+            ustb = new USTB{salt: _SALT}(underlying, mainChainId, lzEndpoint);
             assert(ustbAddress == address(ustb));
             console.log("USTB deployed to %s", ustbAddress);
         }

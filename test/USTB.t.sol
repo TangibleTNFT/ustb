@@ -39,12 +39,14 @@ contract USTBTest is Test {
         uint16 mainChainId = uint16(block.chainid);
         uint16 sideChainId = mainChainId + 1;
 
+        address underlying = 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C;
+
         LZEndpointMock lzEndpoint = new LZEndpointMock(mainChainId);
-        USTB main = new USTB(mainChainId, address(lzEndpoint));
+        USTB main = new USTB(underlying, mainChainId, address(lzEndpoint));
 
         vm.chainId(sideChainId);
 
-        USTB child = new USTB(mainChainId, address(lzEndpoint));
+        USTB child = new USTB(underlying, mainChainId, address(lzEndpoint));
 
         vm.chainId(mainChainId);
 
@@ -75,14 +77,16 @@ contract USTBTest is Test {
     }
 
     function test_initialize() public {
+        address underlying = 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C;
+
         uint256 mainChainId = block.chainid;
         uint256 sideChainId = mainChainId + 1;
 
-        USTB instance1 = new USTB(mainChainId, address(1));
+        USTB instance1 = new USTB(underlying, mainChainId, address(1));
 
         vm.chainId(sideChainId);
 
-        USTB instance2 = new USTB(mainChainId, address(1));
+        USTB instance2 = new USTB(underlying, mainChainId, address(1));
 
         bytes32 slot = keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.Initializable")) - 1))
             & ~bytes32(uint256(0xff));
