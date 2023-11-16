@@ -58,7 +58,6 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
     }
 
     modifier mainChain(bool _isMainChain) {
-        USTBStorage storage $ = _getUSTBStorage();
         if (isMainChain != _isMainChain) {
             revert UnsupportedChain(block.chainid);
         }
