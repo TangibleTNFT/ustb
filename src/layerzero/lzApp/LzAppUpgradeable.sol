@@ -65,7 +65,7 @@ abstract contract LzAppUpgradeable is OwnableUpgradeable, ILayerZeroReceiver, IL
     }
 
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
-    ILayerZeroEndpoint immutable lzEndpoint;
+    ILayerZeroEndpoint public immutable lzEndpoint;
 
     /**
      * @param endpoint Address of the LayerZero endpoint contract.
