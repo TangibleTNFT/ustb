@@ -207,20 +207,22 @@ abstract contract RebaseTokenUpgradeable is ERC20Upgradeable {
      */
     function _update(address from, address to, uint256 amount) internal virtual override {
         RebaseTokenStorage storage $ = _getRebaseTokenStorage();
-        if ($.optOut[from] && $.optOut[to]) {
+        bool optOutFrom = $.optOut[from];
+        bool optOutTo = $.optOut[to];
+        if (optOutFrom && optOutTo) {
             ERC20Upgradeable._update(from, to, amount);
             return;
         }
         uint256 index = $.rebaseIndex;
         uint256 shares = amount.toShares($.rebaseIndex);
         if (from == address(0)) {
-            if (!$.optOut[to]) {
+            if (!optOutTo) {
                 uint256 totalShares = $.totalShares + shares; // Overflow check required
                 _checkRebaseOverflow(totalShares, index);
                 $.totalShares = totalShares;
             }
         } else {
-            if ($.optOut[from]) {
+            if (optOutFrom) {
                 ERC20Upgradeable._update(from, address(0), amount);
             } else {
                 shares = _transferableShares(amount, from);
@@ -232,7 +234,7 @@ abstract contract RebaseTokenUpgradeable is ERC20Upgradeable {
         }
 
         if (to == address(0)) {
-            if (!$.optOut[from]) {
+            if (!optOutFrom) {
                 unchecked {
                     // Underflow not possible: `shares <= $.totalShares` or `shares <= $.shares[from] <= $.totalShares`.
                     $.totalShares -= shares;
@@ -240,7 +242,7 @@ abstract contract RebaseTokenUpgradeable is ERC20Upgradeable {
                 emit Transfer(from, address(0), shares.toTokens(index));
             }
         } else {
-            if ($.optOut[to]) {
+            if (optOutTo) {
                 // At this point we know that `from` has not opted out.
                 ERC20Upgradeable._update(address(0), to, amount);
             } else {
@@ -249,7 +251,7 @@ abstract contract RebaseTokenUpgradeable is ERC20Upgradeable {
                     // into a `uint256`.
                     $.shares[to] += shares;
                 }
-                emit Transfer($.optOut[from] ? address(0) : from, to, shares.toTokens(index));
+                emit Transfer(optOutFrom ? address(0) : from, to, shares.toTokens(index));
             }
         }
     }
