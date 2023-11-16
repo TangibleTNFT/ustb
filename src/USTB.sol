@@ -70,7 +70,10 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @param endpoint The Layer Zero endpoint for cross-chain operations.
      * @custom:oz-upgrades-unsafe-allow constructor
      */
-    constructor(uint256 mainChainId, address endpoint) CrossChainToken(mainChainId) LayerZeroRebaseTokenUpgradeable(endpoint) {
+    constructor(uint256 mainChainId, address endpoint)
+        CrossChainToken(mainChainId)
+        LayerZeroRebaseTokenUpgradeable(endpoint)
+    {
         _disableInitializers();
     }
 

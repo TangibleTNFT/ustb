@@ -51,13 +51,13 @@ contract USTBTest is Test {
         usdm = IERC20(main.UNDERLYING());
 
         ERC1967Proxy mainProxy =
-        new ERC1967Proxy(address(main), abi.encodeWithSelector(USTB.initialize.selector, indexManager));
+            new ERC1967Proxy(address(main), abi.encodeWithSelector(USTB.initialize.selector, indexManager));
         ustb = USTB(address(mainProxy));
 
         vm.chainId(sideChainId);
 
         ERC1967Proxy childProxy =
-        new ERC1967Proxy(address(child), abi.encodeWithSelector(USTB.initialize.selector, indexManager));
+            new ERC1967Proxy(address(child), abi.encodeWithSelector(USTB.initialize.selector, indexManager));
         ustbChild = USTB(address(childProxy));
 
         vm.chainId(mainChainId);
