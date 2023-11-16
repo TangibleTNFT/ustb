@@ -8,6 +8,7 @@ The USTB Token project is a Solidity-based smart contract system designed to pro
 
 ### Contracts
 
+- `CrossChainToken.sol`: Defines basic cross-chain functionalities.
 - `CrossChainRebaseTokenUpgradeable.sol`: Manages cross-chain functionalities for a rebase token.
 - `LayerZeroRebaseTokenUpgradeable.sol`: Adds LayerZero functionalities to a rebase token.
 - `RebaseTokenUpgradeable.sol`: Base contract for a rebase token with upgradeability features.
@@ -17,7 +18,6 @@ The USTB Token project is a Solidity-based smart contract system designed to pro
 
 ### Interfaces
 
-- `ICrossChain.sol`: Defines cross-chain functionalities.
 - `IUSDM.sol`: Defines functionalities related to USDM.
 - `IUSTB.sol`: Defines functionalities related to USTB.
 
