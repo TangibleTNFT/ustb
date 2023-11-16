@@ -173,23 +173,21 @@ abstract contract NonblockingLzAppUpgradeable is LzAppUpgradeable {
         payable
         virtual
     {
-        // manually compute the storage slot for $.failedMessages[srcChainId][srcAddress][nonce]
-        bytes32 slot = keccak256(abi.encode(srcChainId, NonblockingLzAppStorageLocation));
-        slot = keccak256(abi.encode(srcAddress, slot));
-        slot = keccak256(abi.encode(nonce, slot));
+        NonblockingLzAppStorage storage $ = _getNonblockingLzAppStorage();
+        mapping(uint64 => bytes32) storage _failedMessages = $.failedMessages[srcChainId][srcAddress];
 
-        // get a bytes32 pointer to the storage slot
-        StorageSlot.Bytes32Slot storage payloadHash = StorageSlot.getBytes32Slot(slot);
+        // get the payload hash value
+        bytes32 payloadHash = _failedMessages[nonce];
 
         // assert there is message to retry
-        require(payloadHash.value != bytes32(0), "NonblockingLzApp: no stored message");
-        require(keccak256(payload) == payloadHash.value, "NonblockingLzApp: invalid payload");
+        require(payloadHash != bytes32(0), "NonblockingLzApp: no stored message");
+        require(keccak256(payload) == payloadHash, "NonblockingLzApp: invalid payload");
 
         // clear the stored message
-        payloadHash.value = bytes32(0);
+        _failedMessages[nonce] = bytes32(0);
 
         // execute the message. revert if it fails again
         _nonblockingLzReceive(srcChainId, srcAddress, nonce, payload);
-        emit RetryMessageSuccess(srcChainId, srcAddress, nonce, payloadHash.value);
+        emit RetryMessageSuccess(srcChainId, srcAddress, nonce, payloadHash);
     }
 }
