@@ -12,11 +12,25 @@ via_ir = true
 bytecode_hash = "none"
 
 [rpc_endpoints]
-anvil = "http://127.0.0.1:8546"
 mainnet = "${ETHEREUM_RPC_URL}"
+bnb_smart_chain = "${BSC_RPC_URL}"
+polygon = "${POLYGON_RPC_URL}"
+arbitrum_one = "${ARBITRUM_RPC_URL}"
+optimism = "${OPTIMISM_RPC_URL}"
+base = "${BASE_RPC_URL}"
+real = "${REAL_RPC_URL}"
+
+goerli = "${GOERLI_RPC_URL}"
+polygon_mumbai = "${MUMBAI_RPC_URL}"
+unreal = "${UNREAL_RPC_URL}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_MAINNET_KEY}" }
+bnb_smart_chain = { key = "${ETHERSCAN_BSC_KEY}" }
+polygon = { key = "${ETHERSCAN_POLYGON_KEY}" }
+arbitrum_one = { key = "${ETHERSCAN_ARBITRUM_KEY}" }
+optimism = { key = "${ETHERSCAN_OPTIMISM_KEY}" }
+base = { key = "${ETHERSCAN_BASE_KEY}" }
 
 [fmt]
 wrap_comments = true

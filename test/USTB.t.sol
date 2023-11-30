@@ -23,6 +23,7 @@ contract USTBTest is Test {
 
     address usdmHolder = 0xeF9A3cE48678D7e42296166865736899C3638B0E;
     address usdmController = 0xD20D492bC338ab234E6970C4B15178bcD429c01C;
+    address usdmAddress = 0x59D9356E565Ab3A36dD77763Fc0d87fEaf85508C;
 
     string ETHEREUM_RPC_URL = vm.envString("ETHEREUM_RPC_URL");
 
@@ -40,11 +41,11 @@ contract USTBTest is Test {
         uint16 sideChainId = mainChainId + 1;
 
         LZEndpointMock lzEndpoint = new LZEndpointMock(mainChainId);
-        USTB main = new USTB(mainChainId, address(lzEndpoint));
+        USTB main = new USTB(usdmAddress, mainChainId, address(lzEndpoint));
 
         vm.chainId(sideChainId);
 
-        USTB child = new USTB(mainChainId, address(lzEndpoint));
+        USTB child = new USTB(usdmAddress, mainChainId, address(lzEndpoint));
 
         vm.chainId(mainChainId);
 
@@ -78,11 +79,11 @@ contract USTBTest is Test {
         uint256 mainChainId = block.chainid;
         uint256 sideChainId = mainChainId + 1;
 
-        USTB instance1 = new USTB(mainChainId, address(1));
+        USTB instance1 = new USTB(usdmAddress, mainChainId, address(1));
 
         vm.chainId(sideChainId);
 
-        USTB instance2 = new USTB(mainChainId, address(1));
+        USTB instance2 = new USTB(usdmAddress, mainChainId, address(1));
 
         bytes32 slot = keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.Initializable")) - 1))
             & ~bytes32(uint256(0xff));
