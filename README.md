@@ -42,7 +42,11 @@ forge test
 ## Deployment
 
 ```bash
-FOUNDRY_PROFILE=optimized forge script ./script/00_InitialDeployment.s.sol --rpc-url $ETHEREUM_RPC_URL
+# deploy on testnets
+FOUNDRY_PROFILE=optimized forge script ./script/DeployAllTestnet.s.sol --legacy --broadcast
+
+# deploy on mainnets
+FOUNDRY_PROFILE=optimized forge script ./script/DeployAll.s.sol --legacy --broadcast
 ```
 
 ## License
