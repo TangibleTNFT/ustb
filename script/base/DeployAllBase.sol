@@ -27,9 +27,15 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
             USTB ustb = USTB(ustbAddress);
             for (uint256 j = 0; j < deploymentChainAliases.length; j++) {
                 if (i != j) {
-                    ustb.setTrustedRemoteAddress(
-                        _getLzChainId(deploymentChainAliases[j]), abi.encodePacked(ustbAddress)
-                    );
+                    if (
+                        !ustb.isTrustedRemote(
+                            _getLzChainId(deploymentChainAliases[j]), abi.encodePacked(ustbAddress, ustbAddress)
+                        )
+                    ) {
+                        ustb.setTrustedRemoteAddress(
+                            _getLzChainId(deploymentChainAliases[j]), abi.encodePacked(ustbAddress)
+                        );
+                    }
                 }
             }
             vm.stopBroadcast();
@@ -52,7 +58,8 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
 
     /**
      * @dev Virtual function to be overridden in derived contracts to provide an array of chain aliases where the USTB
-     * token will be deployed. This list is essential for ensuring the deployment and configuration of USTB across multiple networks.
+     * token will be deployed. This list is essential for ensuring the deployment and configuration of USTB across
+     * multiple networks.
      *
      * Implementations in derived contracts should return an array of strings, each representing a chain alias for
      * deploying the USTB token.
@@ -117,6 +124,8 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
             return 0; // TODO
         } else if (chain == keccak256("goerli")) {
             return 10121;
+        } else if (chain == keccak256("sepolia")) {
+            return 10161;
         } else if (chain == keccak256("polygon_mumbai")) {
             return 10109;
         } else if (chain == keccak256("unreal")) {
@@ -155,6 +164,8 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
             lzEndpoint = address(0); // TODO
         } else if (chainId == getChain("goerli").chainId) {
             lzEndpoint = 0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23;
+        } else if (chainId == getChain("sepolia").chainId) {
+            lzEndpoint = 0x6098e96a28E02f27B1e6BD381f870F1C8Bd169d3;
         } else if (chainId == getChain("polygon_mumbai").chainId) {
             lzEndpoint = 0xf69186dfBa60DdB133E91E9A4B5673624293d8F8;
         } else if (chainId == getChain("unreal").chainId) {

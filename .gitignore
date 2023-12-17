@@ -3,3 +3,5 @@ cache/
 out/
 
 .env
+
+lcov.info
