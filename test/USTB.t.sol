@@ -461,10 +461,7 @@ contract USTBTest is Test {
 
     function test_shouldFailToSetRebaseIndex() public {
         vm.expectRevert(
-            abi.encodeWithSelector(
-                NotAuthorized.selector,
-                0xaE0bDc4eEAC5E950B67C6819B118761CaAF61946
-            )
+            abi.encodeWithSelector(NotAuthorized.selector, deployer)
         );
         ustbChild.setRebaseIndex(1e18, 1);
         assertEq(ustbChild.rebaseIndex(), 1e18);
