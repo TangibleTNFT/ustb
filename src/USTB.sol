@@ -34,7 +34,8 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
     }
 
     // keccak256(abi.encode(uint256(keccak256("tangible.storage.USTB")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant USTBStorageLocation = 0x56cb630b12f1f031f72de1d734e98085323517cc6515c1c85452dc02f218dd00;
+    bytes32 private constant USTBStorageLocation =
+        0x56cb630b12f1f031f72de1d734e98085323517cc6515c1c85452dc02f218dd00;
 
     function _getUSTBStorage() private pure returns (USTBStorage storage $) {
         // slither-disable-next-line assembly
@@ -70,15 +71,18 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @param endpoint The Layer Zero endpoint for cross-chain operations.
      * @custom:oz-upgrades-unsafe-allow constructor
      */
-    constructor(address underlying, uint256 mainChainId, address endpoint)
-        CrossChainToken(mainChainId)
-        LayerZeroRebaseTokenUpgradeable(endpoint)
-    {
+    constructor(
+        address underlying,
+        uint256 mainChainId,
+        address endpoint
+    ) CrossChainToken(mainChainId) LayerZeroRebaseTokenUpgradeable(endpoint) {
         UNDERLYING = underlying;
         _disableInitializers();
     }
 
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal override onlyOwner {}
 
     /**
      * @notice Initializes the USTB contract with essential parameters.
@@ -146,9 +150,18 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
         _disableRebase(account, disable);
     }
 
-    function rebaseIndexManager() external view override returns (address _rebaseIndexManager) {
+    function rebaseIndexManager()
+        external
+        view
+        override
+        returns (address _rebaseIndexManager)
+    {
         USTBStorage storage $ = _getUSTBStorage();
         _rebaseIndexManager = $.rebaseIndexManager;
+    }
+
+    function isNotRebase(address account) external view returns (bool) {
+        return _isRebaseDisabled(account);
     }
 
     /**
@@ -162,7 +175,10 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @param index The new rebase index to set.
      * @param nonce The new nonce corresponding to the rebase index.
      */
-    function setRebaseIndex(uint256 index, uint256 nonce) public onlyIndexManager mainChain(false) {
+    function setRebaseIndex(
+        uint256 index,
+        uint256 nonce
+    ) public onlyIndexManager mainChain(false) {
         _setRebaseIndex(index, nonce);
     }
 
@@ -210,7 +226,11 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
      * @param to The address to which tokens are being transferred or minted.
      * @param amount The amount of tokens being transferred, minted, or burned.
      */
-    function _update(address from, address to, uint256 amount) internal virtual override {
+    function _update(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual override {
         refreshRebaseIndex();
         super._update(from, to, amount);
     }
