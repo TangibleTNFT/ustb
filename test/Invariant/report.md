@@ -118,9 +118,10 @@ The code below contains two tests:
 ```
 
 **Recommended Mitigation:**
+After line 231 in [RebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/tangible-foundation-contracts/blob/c98ea3cb772c8c3939527be5fd1ebe21ce7e9cc3/src/tokens/RebaseTokenUpgradeable.sol#L231)
 
 ```diff
-After line 231 in [RebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/tangible-foundation-contracts/blob/c98ea3cb772c8c3939527be5fd1ebe21ce7e9cc3/src/tokens/RebaseTokenUpgradeable.sol#L231)
+
 +     if (optOutTo && to != address(0)) $.totalShares -= shares;
 
 After line 252 in [RebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/tangible-foundation-contracts/blob/c98ea3cb772c8c3939527be5fd1ebe21ce7e9cc3/src/tokens/RebaseTokenUpgradeable.sol#L252)
