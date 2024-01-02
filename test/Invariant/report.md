@@ -1,5 +1,6 @@
-Findings
-High
+# Findings
+
+## High
 
 ### [H-1] `totalShares` not updated when tokens are transferred from a rebase user to a non-rebase user and vice-versa
 
