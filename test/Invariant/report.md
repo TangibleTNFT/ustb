@@ -45,7 +45,6 @@ The code below contains two tests:
 
         vm.startPrank(alice);
         uint256 balance1 = ustb.balanceOf(alice);
-        uint256 balance2 = ustb.balanceOf(bob);
 
         //////////////////////////// Shows Bug ////////////////////////////
 
@@ -60,7 +59,7 @@ The code below contains two tests:
 
         console.log(
             ustb.totalSupply(),
-            "Total supply before transferring tokens to bob"
+            "Total supply after transferring tokens to bob"
         );
 
         assertLt(totalSupplyBeforeTransfer, totalSupplyAfterTransfer);
@@ -110,7 +109,7 @@ The code below contains two tests:
 
         console.log(
             ustb.totalSupply(),
-            "Total supply before transferring tokens to alice"
+            "Total supply after transferring tokens to alice"
         );
 
         assertLt(totalSupplyAfterTransfer, totalSupplyBeforeTransfer);
