@@ -230,6 +230,7 @@ contract USTBTest is Test {
     function test_sendFrom() public {
         vm.startPrank(usdmHolder);
         usdm.approve(address(ustb), 1e18);
+        // ustb.disableRebase(usdmHolder, true);
         ustb.mint(usdmHolder, 1e18);
 
         uint256 nativeFee;
@@ -419,6 +420,8 @@ contract USTBTest is Test {
 
         ustb.disableRebase(usdmHolder, true);
     }
+
+    // function
 
     function test_shouldFailToDisableRebaseIfValueIsUnchanged() public {
         vm.startPrank(usdmHolder);

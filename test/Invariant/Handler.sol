@@ -29,25 +29,28 @@ contract Handler is CommonBase, StdCheats, StdUtils {
     uint256 public ghost_mintedSum;
 
     uint256 public ghost_actualBurn;
+    uint256 public ghost_actualMint;
+
     uint256 public ghost_enableRebase;
-
     uint256 public ghost_zeroTransfer;
+
     uint256 public ghost_disableRebase;
-
     uint256 public ghost_actualSendFrom;
+
     uint256 public ghost_actualTransfer;
-
     uint256 public ghost_bridgedTokensTo;
+
     uint256 public ghost_zeroAddressBurn;
-
     uint256 public ghost_zeroTransferFrom;
+
     uint256 public ghost_bridgedTokensFrom;
-
     uint256 public ghost_actualTransferFrom;
-    uint256 public ghost_zeroAddressTransfer;
 
+    uint256 public ghost_zeroAddressTransfer;
     uint256 public ghost_zeroAddressSendFrom;
+
     uint256 public ghost_zeroAddressTransferFrom;
+    uint256 public ghost_zeroAddressDisableRebase;
 
     constructor(USTB _ustb, USTB _ustb2, address _usdm) {
         ustb = _ustb;
@@ -76,6 +79,8 @@ contract Handler is CommonBase, StdCheats, StdUtils {
         ghost_mintedSum += amount;
 
         if (amount == 0) ghost_zeroMint++;
+        if (amount > 0) ghost_actualMint++;
+
         address to = currentActor;
 
         __mint(currentActor, amount);
@@ -115,16 +120,30 @@ contract Handler is CommonBase, StdCheats, StdUtils {
         }
     }
 
+    uint256 public ghost_rebaseAmount;
+    uint256 public ghost_nonRebaseAmount;
+
     function disable(
         uint256 seed,
         bool flag
     ) public useActor(seed) countCall("disableRebase") {
-        // if (
-        //     currentActor != address(0) && flag != ustb.isNotRebase(currentActor)
-        // ) {
-        //     vm.startPrank(currentActor);
-        //     ustb.disableRebase(currentActor, flag);
-        // }
+        if (
+            currentActor != address(0) && flag != ustb.isNotRebase(currentActor)
+        ) {
+            vm.startPrank(currentActor);
+
+            flag == true
+                ? (
+                    ghost_disableRebase++,
+                    ghost_rebaseAmount += ustb.balanceOf(currentActor)
+                )
+                : (
+                    ghost_enableRebase++,
+                    ghost_nonRebaseAmount += ustb.balanceOf(currentActor)
+                );
+
+            ustb.disableRebase(currentActor, flag);
+        } else ghost_zeroAddressDisableRebase++;
     }
 
     function transfer(
@@ -151,74 +170,80 @@ contract Handler is CommonBase, StdCheats, StdUtils {
         uint256 toSeed,
         uint256 amount
     ) public useActor(actorSeed) countCall("sendFrom") {
-        address to = _actors.rand(toSeed);
-        if (currentActor != address(0)) {
-            ghost_actualSendFrom++;
-            vm.deal(to, 10 ether);
+        if (!ustb.isNotRebase(currentActor)) {
+            address to = _actors.rand(toSeed);
+            if (currentActor != address(0)) {
+                ghost_actualSendFrom++;
+                vm.deal(to, 10 ether);
 
-            vm.deal(currentActor, 10 ether);
-            amount = bound(amount, 0, ustb.balanceOf(currentActor));
+                vm.deal(currentActor, 10 ether);
+                amount = bound(amount, 0, ustb.balanceOf(currentActor));
 
-            if (amount == 0) ghost_zeroTransfer++;
-            vm.startPrank(currentActor);
+                if (amount == 0) ghost_zeroTransfer++;
+                vm.startPrank(currentActor);
 
-            usdm.approve(address(ustb), amount);
-            uint256 nativeFee;
+                usdm.approve(address(ustb), amount);
+                uint256 nativeFee;
 
-            (nativeFee, ) = ustb.estimateSendFee(
-                uint16(block.chainid),
-                abi.encodePacked(to),
-                amount,
-                false,
-                ""
-            );
+                (nativeFee, ) = ustb.estimateSendFee(
+                    uint16(block.chainid),
+                    abi.encodePacked(to),
+                    amount,
+                    false,
+                    ""
+                );
 
-            uint256 contractBalBeforeBridge = ustb.balanceOf(address(this));
+                uint256 contractBalBeforeBridge = ustb.balanceOf(address(this));
 
-            ustb.sendFrom{value: (nativeFee * 105) / 100}(
-                currentActor,
-                uint16(block.chainid),
-                abi.encodePacked(to),
-                amount,
-                payable(currentActor),
-                address(0),
-                ""
-            );
+                ustb.sendFrom{value: (nativeFee * 105) / 100}(
+                    currentActor,
+                    uint16(block.chainid),
+                    abi.encodePacked(to),
+                    amount,
+                    payable(currentActor),
+                    address(0),
+                    ""
+                );
 
-            uint256 contractBalAfterBridge = ustb.balanceOf(address(this));
+                uint256 contractBalAfterBridge = ustb.balanceOf(address(this));
 
-            ghost_bridgedTokensTo +=
-                contractBalAfterBridge -
-                contractBalBeforeBridge;
+                ghost_bridgedTokensTo +=
+                    contractBalAfterBridge -
+                    contractBalBeforeBridge;
 
-            vm.startPrank(to);
+                vm.startPrank(to);
 
-            (nativeFee, ) = ustb.estimateSendFee(
-                uint16(block.chainid),
-                abi.encodePacked(currentActor),
-                ustb2.balanceOf(to),
-                false,
-                ""
-            );
+                (nativeFee, ) = ustb.estimateSendFee(
+                    uint16(block.chainid),
+                    abi.encodePacked(currentActor),
+                    ustb2.balanceOf(to),
+                    false,
+                    ""
+                );
 
-            uint256 contractBalBeforeBridge0 = ustb.balanceOf(address(this));
+                uint256 contractBalBeforeBridge0 = ustb.balanceOf(
+                    address(this)
+                );
 
-            ustb2.sendFrom{value: (nativeFee * 105) / 100}(
-                to,
-                uint16(block.chainid),
-                abi.encodePacked(currentActor),
-                ustb2.balanceOf(to),
-                payable(to),
-                address(0),
-                ""
-            );
+                ustb2.sendFrom{value: (nativeFee * 105) / 100}(
+                    to,
+                    uint16(block.chainid),
+                    abi.encodePacked(currentActor),
+                    ustb2.balanceOf(to),
+                    payable(to),
+                    address(0),
+                    ""
+                );
 
-            uint256 contractBalAfterBridge0 = ustb2.balanceOf(address(this));
+                uint256 contractBalAfterBridge0 = ustb2.balanceOf(
+                    address(this)
+                );
 
-            ghost_bridgedTokensFrom +=
-                contractBalBeforeBridge0 -
-                contractBalAfterBridge0;
-        } else ghost_zeroAddressSendFrom++;
+                ghost_bridgedTokensFrom +=
+                    contractBalBeforeBridge0 -
+                    contractBalAfterBridge0;
+            } else ghost_zeroAddressSendFrom++;
+        }
     }
 
     function transferFrom(
@@ -294,10 +319,12 @@ contract Handler is CommonBase, StdCheats, StdUtils {
         console.log("Transfer(s):", ghost_zeroAddressTransfer);
         console.log("sendFrom(s):", ghost_zeroAddressSendFrom);
         console.log("TransferFrom(s):", ghost_zeroAddressTransferFrom);
+        console.log("DisableRebase(s):", ghost_zeroAddressDisableRebase);
 
         console.log("-------------------");
         console.log("Actual Calls:");
         console.log("-------------------");
+        console.log("Mint(s):", ghost_actualMint);
         console.log("Burn(s):", ghost_actualBurn);
         console.log("SendFrom(s):", ghost_actualSendFrom);
         console.log("Transfer(s):", ghost_actualTransfer);

@@ -37,4 +37,7 @@ unreal = { key = "", url = "https://unreal.blockscout.com/api" }
 [fmt]
 wrap_comments = true
 
+[invariant]
+fail_on_revert = true
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
