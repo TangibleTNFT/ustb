@@ -227,10 +227,16 @@ contract USTBTest is Test {
         assertGt(balanceAfter, balanceBefore);
     }
 
+    error AmountExceedsBalance(
+        address account,
+        uint256 balance,
+        uint256 amount
+    );
+
     function test_sendFrom() public {
         vm.startPrank(usdmHolder);
         usdm.approve(address(ustb), 1e18);
-        // ustb.disableRebase(usdmHolder, true);
+        ustb.disableRebase(usdmHolder, true);
         ustb.mint(usdmHolder, 1e18);
 
         uint256 nativeFee;
@@ -254,6 +260,7 @@ contract USTBTest is Test {
         assertApproxEqAbs(ustbChild.balanceOf(alice), 0.5e18, 2);
 
         vm.startPrank(alice);
+
         (nativeFee, ) = ustb.estimateSendFee(
             uint16(block.chainid),
             abi.encodePacked(usdmHolder),
