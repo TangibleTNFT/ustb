@@ -1,3 +1,68 @@
+---
+title: USTB Audit Report
+author: c-n-o-t-e
+date: January 3, 2024
+---
+
+# USTB Audit Report
+
+Prepared by: C-N-O-T-E
+
+# Table of contents
+
+<details>
+
+<summary>See table</summary>
+
+- [USTB Audit Report](#ustb-audit-report)
+- [Table of contents](#table-of-contents)
+- [Disclaimer](#disclaimer)
+- [Risk Classification](#risk-classification)
+- [Audit Details](#audit-details)
+  - [Scope](#scope)
+- [Protocol Summary](#protocol-summary)
+  - [Roles](#roles)
+- [Executive Summary](#executive-summary)
+  - [Issues found](#issues-found)
+
+# Disclaimer
+
+I makes all effort to find as many vulnerabilities in the code in the given time period, but holds no responsibilities for the the findings provided in this document. A security audit by me is not an endorsement of the underlying business or product. The audit was time-boxed and the review of the code was solely on the security aspects of the solidity implementation of the contracts.
+
+# Risk Classification
+
+|            |        | Impact |        |     |
+| ---------- | ------ | ------ | ------ | --- |
+|            |        | High   | Medium | Low |
+|            | High   | H      | H/M    | M   |
+| Likelihood | Medium | H/M    | M      | M/L |
+|            | Low    | M      | M/L    | L   |
+
+# Audit Details
+
+## Scope
+
+```
+src/
+--- USTB.sol
+--- RebaseTokenUpgradeable.sol
+--- LayerZeroRebaseTokenUpgradeable.sol
+```
+
+# Protocol Summary
+
+USTB extends the functionality of `LayerZeroRebaseTokenUpgradeable` to provide additional features specific to USTB. It adds capabilities for minting and burning tokens backed by an underlying asset, and dynamically updates the rebase index.
+
+# Executive Summary
+
+## Issues found
+
+| Severity | Number of issues found |
+| -------- | ---------------------- |
+| High     | 1                      |
+| Medium   | 1                      |
+| Low      | 1                      |
+
 # Findings
 
 ## High
