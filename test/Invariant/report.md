@@ -63,6 +63,8 @@ The code below contains two tests:
             "Total supply after transferring tokens to bob"
         );
 
+        // totalSupplyBeforeTransfer is meant to be equal to totalSupplyAfterTransfer
+        // because tokens are only transferred between users not burnt/minted.
         assertLt(totalSupplyBeforeTransfer, totalSupplyAfterTransfer);
     }
 
@@ -113,6 +115,8 @@ The code below contains two tests:
             "Total supply after transferring tokens to alice"
         );
 
+        // totalSupplyBeforeTransfer is meant to be equal to totalSupplyAfterTransfer
+        // because tokens are only transferred between users not burnt/minted.
         assertLt(totalSupplyAfterTransfer, totalSupplyBeforeTransfer);
     }
 ```
