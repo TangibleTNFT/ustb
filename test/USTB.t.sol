@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
@@ -227,16 +227,9 @@ contract USTBTest is Test {
         assertGt(balanceAfter, balanceBefore);
     }
 
-    error AmountExceedsBalance(
-        address account,
-        uint256 balance,
-        uint256 amount
-    );
-
     function test_sendFrom() public {
         vm.startPrank(usdmHolder);
         usdm.approve(address(ustb), 1e18);
-        ustb.disableRebase(usdmHolder, true);
         ustb.mint(usdmHolder, 1e18);
 
         uint256 nativeFee;
@@ -427,8 +420,6 @@ contract USTBTest is Test {
 
         ustb.disableRebase(usdmHolder, true);
     }
-
-    // function
 
     function test_shouldFailToDisableRebaseIfValueIsUnchanged() public {
         vm.startPrank(usdmHolder);

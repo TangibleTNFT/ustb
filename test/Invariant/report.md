@@ -207,9 +207,9 @@ If both rebase and non-rebase user are allowed to bridge tokens then the logic i
 
 ## Medium
 
-### [L-2] Amount newly minted to non-rebase users are not checked for `totalSupply` overflow
+### [M-2] Amount newly minted to non-rebase users are not checked for `totalSupply` overflow
 
-**Description:** In `RebaseTokenUpgradeable.sol`, when a non-rebase user mints tokens the `_update()` does not check if the addition of minted amount plus `totalShares` plus `ERC20Upgradeable.totalSupply()` overflows.
+**Description:** In `RebaseTokenUpgradeable.sol`, when a non-rebase user mints tokens the `_update()` does not check if the addition of minted `amount` plus `totalShares` plus `ERC20Upgradeable.totalSupply()` overflows.
 
 **Impact:** When this happens calls to `RebaseTokenUpgradeable.totalSupply()` overflows thereby making `totalSupply() unreachable`.
 
@@ -247,7 +247,7 @@ The code below contains one test:
         ustb.disableRebase(address(7), true);
         ustb.exposedMintForTesting(address(7), type(uint256).max);
 
-        //////////////////////////// Fails with arithmetic underflow or overflow  ////////////////////////////
+        //////////////////////////// Fails with overflow  ////////////////////////////
 
         vm.expectRevert();
         ustb.totalSupply();
