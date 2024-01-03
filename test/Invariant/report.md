@@ -260,7 +260,13 @@ After line 245 in [RebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/t
 
 ```diff
 +   _checkTotalSupplyOverFlow(amount);
+
     .......................
+
++   error SupplyOverflow();
+
+    .......................
+
 +   function _checkTotalSupplyOverFlow(uint256 amount) private view {
 +        unchecked {
 +            if (amount + totalSupply() < totalSupply()) {
