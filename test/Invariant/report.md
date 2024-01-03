@@ -6,8 +6,6 @@ Date: January 3, 2024
 
 # USTB Audit Report
 
-Prepared by: C-N-O-T-E
-
 # Table of contents
 
 <details>
