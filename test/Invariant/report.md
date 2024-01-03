@@ -4,7 +4,7 @@
 
 ### [H-1] `totalShares` not updated when tokens are transferred from a rebase user to a non-rebase user and vice-versa
 
-**Description:** In the `RebaseTokenUpgradeable.sol`, when token transfer is done from a rebase user to a non-rebase user the shares to be transferred out isn't substracted from `totalShares` and when token transfer is done from a non-rebase user to a rebase user the shares to be transferred in isn't added to `totalShares` in the `_update()`.
+**Description:** In `RebaseTokenUpgradeable.sol`, when token transfer is done from a rebase user to a non-rebase user the shares to be transferred out isn't substracted from `totalShares` and when token transfer is done from a non-rebase user to a rebase user the shares to be transferred in isn't added to `totalShares` in the `_update()`.
 
 **Impact:** USTB `totalSupply()` is inaccurate.
 
@@ -13,7 +13,7 @@ The code below contains two tests:
 
 `test_ReturnWrongTotalSupplyAfterTokenTransferFromRebaseToNonRebase()` shows how alice a rebase user transfers tokens to bob a non-rebase user and the `totalShares` of rebase tokens isn't reduced by the transferred amount.
 
-`test_ReturnWrongTotalSupplyAfterTokenTransferFromNonRebaseToRebase()` show how bob a non-rebase user transfers tokens to alice a rebase user and the transferred amount isn't added to the `totalShares` of non-rebase tokens.
+`test_ReturnWrongTotalSupplyAfterTokenTransferFromNonRebaseToRebase()` shows how bob a non-rebase user transfers tokens to alice a rebase user and the transferred amount isn't added to the `totalShares` of non-rebase tokens.
 
 ```javascript
     function test_ReturnWrongTotalSupplyAfterTokenTransferFromRebaseToNonRebase()
@@ -135,12 +135,12 @@ After line 252 in [RebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/t
 
 ### [M-1] Fails to bridge tokens for non-rebase users
 
-**Description:** In the `LayerZeroRebaseTokenUpgradeable.sol`, when a non-rebase user tries to bridge tokens it fails because when `_debitFrom()` is called `_transferableShares()` gets called as well which is soley used to check rebase user balance before tranferring tokens, given the user trying to bridge token is a non-rebase it fails stating `AmountExceedsBalance()`
+**Description:** In `LayerZeroRebaseTokenUpgradeable.sol`, when a non-rebase user tries to bridge tokens it fails because when `_debitFrom()` is called `_transferableShares()` gets called as well which is solely used to check rebase user balance before tranferring tokens, given the user trying to bridge token is a non-rebase it fails stating `AmountExceedsBalance()`
 
 **Impact:** Fails everytime a non-rebase users tries to bridge tokens.
 
 **Proof of Concept:**
-The code below contains two tests:
+The code below contains one test:
 
 `test_shouldFailWhenSenderIsNonRebaseUser()` shows how a non-rebase user fails to bridge tokens.
 
@@ -204,3 +204,68 @@ If only rebase user are allowed to bridge tokens, then after line 154 in [LayerZ
 ```
 
 If both rebase and non-rebase user are allowed to bridge tokens then the logic in `_debitFrom()` needs to be rewritten.
+
+## Medium
+
+### [L-2] Amount newly minted to non-rebase users are not checked for `totalSupply` overflow
+
+**Description:** In `RebaseTokenUpgradeable.sol`, when a non-rebase user mints tokens the `_update()` does not check if the addition of minted amount plus `totalShares` plus `ERC20Upgradeable.totalSupply()` overflows.
+
+**Impact:** When this happens calls to `RebaseTokenUpgradeable.totalSupply()` overflows thereby making `totalSupply() unreachable`.
+
+**Proof of Concept:**
+The code below contains one test:
+
+`test_TotalSupplyUnreachableWhenNonRebaseMintsTokenAboveSupply()` shows how `totalSupply()` overflows.
+
+```Javascript
+    // To detail this error I exposed the `_mint()`
+
+    function exposedMintForTesting(address to, uint256 amount) external mainChain(true) {
+        _mint(to, amount);
+    }
+
+    // Test
+    function test_TotalSupplyUnreachableWhenNonRebaseMintsTokenAboveSupply()
+        public
+    {
+        address usdmMinter = 0x48AEB395FB0E4ff8433e9f2fa6E0579838d33B62;
+        vm.startPrank(usdmMinter);
+
+        (bool success, ) = address(usdm).call(
+            abi.encodeWithSignature("mint(address,uint256)", address(3), 1e18)
+        );
+
+        assert(success);
+
+        vm.startPrank(address(3));
+        usdm.approve(address(ustb), type(uint256).max);
+        ustb.mint(address(3), 1e18);
+
+        vm.startPrank(address(7));
+        usdm.approve(address(ustb), type(uint256).max);
+        ustb.disableRebase(address(7), true);
+        ustb.exposedMintForTesting(address(7), type(uint256).max);
+
+        //////////////////////////// Fails with arithmetic underflow or overflow  ////////////////////////////
+
+        vm.expectRevert();
+        ustb.totalSupply();
+    }
+```
+
+**Recommended Mitigation:**
+
+After line 245 in [RebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/tangible-foundation-contracts/blob/c98ea3cb772c8c3939527be5fd1ebe21ce7e9cc3/src/tokens/RebaseTokenUpgradeable.sol#L245)
+
+```diff
++   _checkTotalSupplyOverFlow(amount);
+    .......................
++   function _checkTotalSupplyOverFlow(uint256 amount) private view {
++        unchecked {
++            if (amount + totalSupply() < totalSupply()) {
++                revert SupplyOverflow();
++            }
++        }
++    }
+```
