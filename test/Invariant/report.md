@@ -281,11 +281,11 @@ To `run` add to `USTB.t.sol`.
 If only rebase user are allowed to bridge tokens, then after line 154 in [LayerZeroRebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/tangible-foundation-contracts/blob/c98ea3cb772c8c3939527be5fd1ebe21ce7e9cc3/src/tokens/LayerZeroRebaseTokenUpgradeable.sol#L154)
 
 ```diff
-+   error OnlyRebaseTokensCanBridgeToken();
++   error OnlyRebaseTokensCanBridged();
     ................................
 
 +   if (_isRebaseDisabled(from)) {
-+            revert OnlyRebaseTokensCanBridgeToken();
++            revert OnlyRebaseTokensCanBridged();
 +    }
 ```
 
