@@ -16,6 +16,7 @@ The code below contains two tests:
 `test_ReturnWrongTotalSupplyAfterTokenTransferFromNonRebaseToRebase()` shows how bob a non-rebase user transfers tokens to alice a rebase user and the transferred amount isn't added to the `totalShares` of non-rebase tokens.
 
 ```javascript
+
     function test_ReturnWrongTotalSupplyAfterTokenTransferFromRebaseToNonRebase()
         public
     {
@@ -121,6 +122,8 @@ The code below contains two tests:
     }
 ```
 
+#### To `run` add to `USTB.t.sol`
+
 **Recommended Mitigation:**
 
 After line 231 in [RebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/tangible-foundation-contracts/blob/c98ea3cb772c8c3939527be5fd1ebe21ce7e9cc3/src/tokens/RebaseTokenUpgradeable.sol#L231)
@@ -194,6 +197,8 @@ The code below contains one test:
     }
 ```
 
+#### To `run` add to `USTB.t.sol`
+
 **Recommended Mitigation:**
 
 If only rebase user are allowed to bridge tokens, then after line 154 in [LayerZeroRebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/tangible-foundation-contracts/blob/c98ea3cb772c8c3939527be5fd1ebe21ce7e9cc3/src/tokens/LayerZeroRebaseTokenUpgradeable.sol#L154)
@@ -257,6 +262,8 @@ The code below contains one test:
         ustb.totalSupply();
     }
 ```
+
+#### To `run` add to `USTB.t.sol`
 
 **Recommended Mitigation:**
 
