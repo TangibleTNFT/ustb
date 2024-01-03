@@ -122,7 +122,7 @@ The code below contains two tests:
     }
 ```
 
-#### To `run` add to `USTB.t.sol`
+To `run` add to `USTB.t.sol`.
 
 **Recommended Mitigation:**
 
@@ -197,7 +197,7 @@ The code below contains one test:
     }
 ```
 
-#### To `run` add to `USTB.t.sol`
+To `run` add to `USTB.t.sol`.
 
 **Recommended Mitigation:**
 
@@ -263,7 +263,7 @@ The code below contains one test:
     }
 ```
 
-**_ To `run` add to `USTB.t.sol` _**
+To `run` add to `USTB.t.sol`.
 
 **Recommended Mitigation:**
 
