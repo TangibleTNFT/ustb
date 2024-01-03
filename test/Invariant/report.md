@@ -140,83 +140,7 @@ After line 252 in [RebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/t
 
 ## Medium
 
-### [M-1] Fails to bridge tokens for non-rebase users
-
-**Description:** In `LayerZeroRebaseTokenUpgradeable.sol`, when a non-rebase user tries to bridge tokens it fails because when `_debitFrom()` is called `_transferableShares()` gets called as well which is solely used to check rebase user balance before tranferring tokens, given the user trying to bridge token is a non-rebase it fails stating `AmountExceedsBalance()`
-
-**Impact:** Fails everytime a non-rebase users tries to bridge tokens.
-
-**Proof of Concept:**
-The code below contains one test:
-
-`test_shouldFailWhenSenderIsNonRebaseUser()` shows how a non-rebase user fails to bridge tokens.
-
-```Javascript
-    error AmountExceedsBalance(
-        address account,
-        uint256 balance,
-        uint256 amount
-    );
-
-    function test_shouldFailWhenSenderIsNonRebaseUser() public {
-        vm.startPrank(usdmHolder);
-        usdm.approve(address(ustb), 1e18);
-
-        // user becomes non-rebase
-        ustb.disableRebase(usdmHolder, true);
-        ustb.mint(usdmHolder, 1e18);
-
-        uint256 nativeFee;
-        (nativeFee, ) = ustb.estimateSendFee(
-            uint16(block.chainid),
-            abi.encodePacked(alice),
-            0.5e18,
-            false,
-            ""
-        );
-
-        // Catch AmountExceedsBalance error.
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                AmountExceedsBalance.selector,
-                usdmHolder,
-                0,
-                0.5e18
-            )
-        );
-
-        ustb.sendFrom{value: (nativeFee * 105) / 100}(
-            usdmHolder,
-            uint16(block.chainid),
-            abi.encodePacked(alice),
-            0.5e18,
-            payable(usdmHolder),
-            address(0),
-            ""
-        );
-    }
-```
-
-To `run` add to `USTB.t.sol`.
-
-**Recommended Mitigation:**
-
-If only rebase user are allowed to bridge tokens, then after line 154 in [LayerZeroRebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/tangible-foundation-contracts/blob/c98ea3cb772c8c3939527be5fd1ebe21ce7e9cc3/src/tokens/LayerZeroRebaseTokenUpgradeable.sol#L154)
-
-```diff
-+   error OnlyRebaseTokensCanBridgeToken();
-    ................................
-
-+   if (_isRebaseDisabled(from)) {
-+            revert OnlyRebaseTokensCanBridgeToken();
-+    }
-```
-
-If both rebase and non-rebase user are allowed to bridge tokens then the logic in `_debitFrom()` needs to be rewritten.
-
-## Medium
-
-### [M-2] Amount newly minted to non-rebase users are not checked for `totalSupply` overflow
+### [M-1] Amount newly minted to non-rebase users are not checked for `totalSupply` overflow
 
 **Description:** In `RebaseTokenUpgradeable.sol`, when a non-rebase user mints tokens the `_update()` does not check if the addition of minted `amount` plus `totalShares` plus `ERC20Upgradeable.totalSupply()` overflows.
 
@@ -290,3 +214,79 @@ After line 245 in [RebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/t
 +        }
 +    }
 ```
+
+## Low
+
+### [L-1] Fails to bridge tokens for non-rebase users
+
+**Description:** In `LayerZeroRebaseTokenUpgradeable.sol`, when a non-rebase user tries to bridge tokens it fails because when `_debitFrom()` is called `_transferableShares()` gets called as well which is solely used to check rebase user balance before tranferring tokens, given the user trying to bridge token is a non-rebase it fails stating `AmountExceedsBalance()`
+
+**Impact:** Fails everytime a non-rebase users tries to bridge tokens.
+
+**Proof of Concept:**
+The code below contains one test:
+
+`test_shouldFailWhenSenderIsNonRebaseUser()` shows how a non-rebase user fails to bridge tokens.
+
+```Javascript
+    error AmountExceedsBalance(
+        address account,
+        uint256 balance,
+        uint256 amount
+    );
+
+    function test_shouldFailWhenSenderIsNonRebaseUser() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 1e18);
+
+        // user becomes non-rebase
+        ustb.disableRebase(usdmHolder, true);
+        ustb.mint(usdmHolder, 1e18);
+
+        uint256 nativeFee;
+        (nativeFee, ) = ustb.estimateSendFee(
+            uint16(block.chainid),
+            abi.encodePacked(alice),
+            0.5e18,
+            false,
+            ""
+        );
+
+        // Catch AmountExceedsBalance error.
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AmountExceedsBalance.selector,
+                usdmHolder,
+                0,
+                0.5e18
+            )
+        );
+
+        ustb.sendFrom{value: (nativeFee * 105) / 100}(
+            usdmHolder,
+            uint16(block.chainid),
+            abi.encodePacked(alice),
+            0.5e18,
+            payable(usdmHolder),
+            address(0),
+            ""
+        );
+    }
+```
+
+To `run` add to `USTB.t.sol`.
+
+**Recommended Mitigation:**
+
+If only rebase user are allowed to bridge tokens, then after line 154 in [LayerZeroRebaseTokenUpgradeable.sol](https://github.com/TangibleTNFT/tangible-foundation-contracts/blob/c98ea3cb772c8c3939527be5fd1ebe21ce7e9cc3/src/tokens/LayerZeroRebaseTokenUpgradeable.sol#L154)
+
+```diff
++   error OnlyRebaseTokensCanBridgeToken();
+    ................................
+
++   if (_isRebaseDisabled(from)) {
++            revert OnlyRebaseTokensCanBridgeToken();
++    }
+```
+
+If both rebase and non-rebase user are allowed to bridge tokens then the logic in `_debitFrom()` needs to be rewritten.
