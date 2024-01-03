@@ -120,9 +120,6 @@ contract Handler is CommonBase, StdCheats, StdUtils {
         }
     }
 
-    uint256 public ghost_rebaseAmount;
-    uint256 public ghost_nonRebaseAmount;
-
     function disable(
         uint256 seed,
         bool flag
@@ -131,16 +128,6 @@ contract Handler is CommonBase, StdCheats, StdUtils {
             currentActor != address(0) && flag != ustb.isNotRebase(currentActor)
         ) {
             vm.startPrank(currentActor);
-
-            flag == true
-                ? (
-                    ghost_disableRebase++,
-                    ghost_rebaseAmount += ustb.balanceOf(currentActor)
-                )
-                : (
-                    ghost_enableRebase++,
-                    ghost_nonRebaseAmount += ustb.balanceOf(currentActor)
-                );
 
             ustb.disableRebase(currentActor, flag);
         } else ghost_zeroAddressDisableRebase++;
