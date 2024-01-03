@@ -30,7 +30,7 @@ Prepared by: C-N-O-T-E
 
 # Disclaimer
 
-I makes all effort to find as many vulnerabilities in the code in the given time period, but holds no responsibilities for the the findings provided in this document. A security audit by me is not an endorsement of the underlying business or product. The audit was time-boxed and the review of the code was solely on the security aspects of the solidity implementation of the contracts.
+I make all effort to find as many vulnerabilities in the code in the given time period, but holds no responsibilities for the the findings provided in this document. A security audit by me is not an endorsement of the underlying business or product. The audit was time-boxed and the review of the code was solely on the security aspects of the solidity implementation of the contracts.
 
 # Risk Classification
 
@@ -48,6 +48,8 @@ I makes all effort to find as many vulnerabilities in the code in the given time
 ```
 src/
 --- USTB.sol
+
+lib/tangible-foundation-contracts/src/tokens
 --- RebaseTokenUpgradeable.sol
 --- LayerZeroRebaseTokenUpgradeable.sol
 ```
