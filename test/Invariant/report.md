@@ -51,8 +51,8 @@ The code below contains two tests:
         //////////////////////////// Shows Bug ////////////////////////////
 
         console.log(
-            ustb.totalSupply(),
-            "Total supply before transferring tokens to bob"
+            "Total supply before transferring tokens to bob",
+            ustb.totalSupply()
         );
 
         uint256 totalSupplyBeforeTransfer = ustb.totalSupply();
@@ -60,8 +60,8 @@ The code below contains two tests:
         uint256 totalSupplyAfterTransfer = ustb.totalSupply();
 
         console.log(
-            ustb.totalSupply(),
-            "Total supply after transferring tokens to bob"
+            "Total supply after transferring tokens to bob",
+            ustb.totalSupply()
         );
 
         // totalSupplyBeforeTransfer is meant to be equal to totalSupplyAfterTransfer
@@ -103,8 +103,8 @@ The code below contains two tests:
         //////////////////////////// Shows Bug ////////////////////////////
 
         console.log(
-            ustb.totalSupply(),
-            "Total supply before transferring tokens to alice"
+            "Total supply before transferring tokens to bob",
+            ustb.totalSupply()
         );
 
         uint256 totalSupplyBeforeTransfer = ustb.totalSupply();
@@ -112,8 +112,8 @@ The code below contains two tests:
         uint256 totalSupplyAfterTransfer = ustb.totalSupply();
 
         console.log(
-            ustb.totalSupply(),
-            "Total supply after transferring tokens to alice"
+            "Total supply after transferring tokens to bob",
+            ustb.totalSupply()
         );
 
         // totalSupplyBeforeTransfer is meant to be equal to totalSupplyAfterTransfer
@@ -230,6 +230,7 @@ The code below contains one test:
 ```Javascript
     // To detail this error I exposed the `_mint()`
 
+    // Add to USTB.sol
     function exposedMintForTesting(address to, uint256 amount) external mainChain(true) {
         _mint(to, amount);
     }
@@ -247,10 +248,12 @@ The code below contains one test:
 
         assert(success);
 
+        // Mints 1e18 rebase tokens to address(3)
         vm.startPrank(address(3));
         usdm.approve(address(ustb), type(uint256).max);
         ustb.mint(address(3), 1e18);
 
+        // Mints max of uint256 rebase tokens to address(7)
         vm.startPrank(address(7));
         usdm.approve(address(ustb), type(uint256).max);
         ustb.disableRebase(address(7), true);
@@ -258,6 +261,7 @@ The code below contains one test:
 
         //////////////////////////// Fails with overflow  ////////////////////////////
 
+        // 1e18 + type(uint256).max which overflows
         vm.expectRevert();
         ustb.totalSupply();
     }
