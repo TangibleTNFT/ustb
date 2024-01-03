@@ -1,5 +1,4 @@
 ---
-Title: USTB Audit Report
 Author: c-n-o-t-e
 Date: January 3, 2024
 ---
