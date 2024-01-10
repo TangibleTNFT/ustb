@@ -11,6 +11,12 @@ import "@layerzerolabs/contracts/lzApp/mocks/LZEndpointMock.sol";
 import "src/USTB.sol";
 
 contract USTBTest is Test {
+    error NotAuthorized(address caller);
+    error InvalidZeroAddress();
+    error ValueUnchanged();
+
+    error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
+
     USTB ustb;
     USTB ustbChild;
 
@@ -210,7 +216,7 @@ contract USTBTest is Test {
 
         uint256 nativeFee;
         (nativeFee,) = ustb.estimateSendFee(uint16(block.chainid), abi.encodePacked(alice), 0.5e18, false, "");
-        ustb.sendFrom{value: nativeFee * 105 / 100}(
+        ustb.sendFrom{value: (nativeFee * 105) / 100}(
             usdmHolder, uint16(block.chainid), abi.encodePacked(alice), 0.5e18, payable(usdmHolder), address(0), ""
         );
         assertApproxEqAbs(ustb.balanceOf(usdmHolder), 0.5e18, 2);
@@ -220,7 +226,7 @@ contract USTBTest is Test {
         (nativeFee,) = ustb.estimateSendFee(
             uint16(block.chainid), abi.encodePacked(usdmHolder), ustbChild.balanceOf(alice), false, ""
         );
-        ustbChild.sendFrom{value: nativeFee * 105 / 100}(
+        ustbChild.sendFrom{value: (nativeFee * 105) / 100}(
             alice,
             uint16(block.chainid),
             abi.encodePacked(usdmHolder),
@@ -353,5 +359,69 @@ contract USTBTest is Test {
 
         assertEq(ustb.balanceOf(alice), 0);
         assertApproxEqAbs(ustb.balanceOf(bob), balance + balance, 1);
+    }
+
+    /////////////////////////////// NEW TEST ///////////////////////////////////
+
+    function test_shouldFailTodisableRebaseIfCallerIsNotAuthorized() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 1e18);
+
+        ustb.mint(usdmHolder, 1e18);
+        vm.stopPrank();
+
+        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, address(this)));
+
+        ustb.disableRebase(usdmHolder, true);
+    }
+
+    function test_shouldFailToDisableRebaseIfValueIsUnchanged() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 1e18);
+
+        ustb.mint(usdmHolder, 1e18);
+        vm.expectRevert(abi.encodeWithSelector(ValueUnchanged.selector));
+
+        ustb.disableRebase(usdmHolder, false);
+    }
+
+    function test_burnViaApprovedAddress() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 1e18);
+
+        ustb.mint(usdmHolder, 1e18);
+        ustb.approve(address(this), 1e18);
+
+        vm.stopPrank();
+        ustb.burn(usdmHolder, ustb.balanceOf(usdmHolder));
+
+        assertEq(ustb.balanceOf(usdmHolder), 0);
+        assertEq(ustb.totalSupply(), 0);
+    }
+
+    function test_failToBurnTokenFromNotApprovedOrOwner() public {
+        vm.startPrank(usdmHolder);
+
+        usdm.approve(address(ustb), 1e18);
+        ustb.mint(usdmHolder, 1e18);
+
+        ustb.approve(address(this), 1e18);
+        vm.stopPrank();
+
+        ustb.burn(usdmHolder, ustb.balanceOf(usdmHolder));
+
+        assertEq(ustb.balanceOf(usdmHolder), 0);
+        assertEq(ustb.totalSupply(), 0);
+    }
+
+    function test_shouldFailToSetRebaseIndex() public {
+        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, deployer));
+        ustbChild.setRebaseIndex(1e18, 1);
+        assertEq(ustbChild.rebaseIndex(), 1e18);
+    }
+
+    function test_shouldFailTosetRebaseIndexManager() public {
+        vm.expectRevert(abi.encodeWithSelector(InvalidZeroAddress.selector));
+        ustb.setRebaseIndexManager(address(0));
     }
 }
