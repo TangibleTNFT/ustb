@@ -15,11 +15,7 @@ contract USTBTest is Test {
     error InvalidZeroAddress();
     error ValueUnchanged();
 
-    error ERC20InsufficientAllowance(
-        address spender,
-        uint256 allowance,
-        uint256 needed
-    );
+    error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
 
     USTB ustb;
     USTB ustbChild;
@@ -61,18 +57,14 @@ contract USTBTest is Test {
 
         usdm = IERC20(main.UNDERLYING());
 
-        ERC1967Proxy mainProxy = new ERC1967Proxy(
-            address(main),
-            abi.encodeWithSelector(USTB.initialize.selector, indexManager)
-        );
+        ERC1967Proxy mainProxy =
+            new ERC1967Proxy(address(main), abi.encodeWithSelector(USTB.initialize.selector, indexManager));
         ustb = USTB(address(mainProxy));
 
         vm.chainId(sideChainId);
 
-        ERC1967Proxy childProxy = new ERC1967Proxy(
-            address(child),
-            abi.encodeWithSelector(USTB.initialize.selector, indexManager)
-        );
+        ERC1967Proxy childProxy =
+            new ERC1967Proxy(address(child), abi.encodeWithSelector(USTB.initialize.selector, indexManager));
         ustbChild = USTB(address(childProxy));
 
         vm.chainId(mainChainId);
@@ -83,9 +75,7 @@ contract USTBTest is Test {
         lzEndpoint.setDestLzEndpoint(address(ustbChild), address(lzEndpoint));
 
         bytes memory ustbAddress = abi.encodePacked(uint160(address(ustb)));
-        bytes memory ustbChildAddress = abi.encodePacked(
-            uint160(address(ustbChild))
-        );
+        bytes memory ustbChildAddress = abi.encodePacked(uint160(address(ustbChild)));
 
         ustb.setTrustedRemoteAddress(mainChainId, ustbChildAddress);
         ustbChild.setTrustedRemoteAddress(mainChainId, ustbAddress);
@@ -101,11 +91,8 @@ contract USTBTest is Test {
 
         USTB instance2 = new USTB(usdmAddress, mainChainId, address(1));
 
-        bytes32 slot = keccak256(
-            abi.encode(
-                uint256(keccak256("openzeppelin.storage.Initializable")) - 1
-            )
-        ) & ~bytes32(uint256(0xff));
+        bytes32 slot = keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.Initializable")) - 1))
+            & ~bytes32(uint256(0xff));
         vm.store(address(instance1), slot, 0);
         vm.store(address(instance2), slot, 0);
 
@@ -166,9 +153,7 @@ contract USTBTest is Test {
 
         vm.roll(18349000);
         vm.startPrank(usdmController);
-        (bool success, ) = address(usdm).call(
-            abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12)
-        );
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
         assert(success);
 
         vm.startPrank(indexManager);
@@ -192,9 +177,7 @@ contract USTBTest is Test {
 
         vm.roll(18349000);
         vm.startPrank(usdmController);
-        (bool success, ) = address(usdm).call(
-            abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12)
-        );
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
         assert(success);
 
         vm.startPrank(indexManager);
@@ -213,9 +196,7 @@ contract USTBTest is Test {
 
         vm.roll(18350000);
         vm.startPrank(usdmController);
-        (success, ) = address(usdm).call(
-            abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12)
-        );
+        (success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
         assert(success);
 
         vm.startPrank(indexManager);
@@ -234,32 +215,16 @@ contract USTBTest is Test {
         ustb.mint(usdmHolder, 1e18);
 
         uint256 nativeFee;
-        (nativeFee, ) = ustb.estimateSendFee(
-            uint16(block.chainid),
-            abi.encodePacked(alice),
-            0.5e18,
-            false,
-            ""
-        );
+        (nativeFee,) = ustb.estimateSendFee(uint16(block.chainid), abi.encodePacked(alice), 0.5e18, false, "");
         ustb.sendFrom{value: (nativeFee * 105) / 100}(
-            usdmHolder,
-            uint16(block.chainid),
-            abi.encodePacked(alice),
-            0.5e18,
-            payable(usdmHolder),
-            address(0),
-            ""
+            usdmHolder, uint16(block.chainid), abi.encodePacked(alice), 0.5e18, payable(usdmHolder), address(0), ""
         );
         assertApproxEqAbs(ustb.balanceOf(usdmHolder), 0.5e18, 2);
         assertApproxEqAbs(ustbChild.balanceOf(alice), 0.5e18, 2);
 
         vm.startPrank(alice);
-        (nativeFee, ) = ustb.estimateSendFee(
-            uint16(block.chainid),
-            abi.encodePacked(usdmHolder),
-            ustbChild.balanceOf(alice),
-            false,
-            ""
+        (nativeFee,) = ustb.estimateSendFee(
+            uint16(block.chainid), abi.encodePacked(usdmHolder), ustbChild.balanceOf(alice), false, ""
         );
         ustbChild.sendFrom{value: (nativeFee * 105) / 100}(
             alice,
@@ -289,9 +254,7 @@ contract USTBTest is Test {
 
         vm.roll(18349000);
         vm.startPrank(usdmController);
-        (bool success, ) = address(usdm).call(
-            abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12)
-        );
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
         assert(success);
 
         vm.startPrank(indexManager);
@@ -321,9 +284,7 @@ contract USTBTest is Test {
 
         vm.roll(18349000);
         vm.startPrank(usdmController);
-        (bool success, ) = address(usdm).call(
-            abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12)
-        );
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
         assert(success);
 
         vm.startPrank(indexManager);
@@ -354,9 +315,7 @@ contract USTBTest is Test {
 
         vm.roll(18349000);
         vm.startPrank(usdmController);
-        (bool success, ) = address(usdm).call(
-            abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12)
-        );
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
         assert(success);
 
         vm.startPrank(indexManager);
@@ -388,9 +347,7 @@ contract USTBTest is Test {
 
         vm.roll(18349000);
         vm.startPrank(usdmController);
-        (bool success, ) = address(usdm).call(
-            abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12)
-        );
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
         assert(success);
 
         vm.startPrank(indexManager);
@@ -413,9 +370,7 @@ contract USTBTest is Test {
         ustb.mint(usdmHolder, 1e18);
         vm.stopPrank();
 
-        vm.expectRevert(
-            abi.encodeWithSelector(NotAuthorized.selector, address(this))
-        );
+        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, address(this)));
 
         ustb.disableRebase(usdmHolder, true);
     }
@@ -460,9 +415,7 @@ contract USTBTest is Test {
     }
 
     function test_shouldFailToSetRebaseIndex() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(NotAuthorized.selector, deployer)
-        );
+        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, deployer));
         ustbChild.setRebaseIndex(1e18, 1);
         assertEq(ustbChild.rebaseIndex(), 1e18);
     }
