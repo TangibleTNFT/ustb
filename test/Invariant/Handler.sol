@@ -120,12 +120,12 @@ contract Handler is CommonBase, StdCheats, StdUtils {
     }
 
     function disable(uint256 seed, bool flag) public useActor(seed) countCall("disableRebase") {
-        // if (currentActor != address(0) && flag != ustb.isNotRebase(currentActor)) {
-        //     vm.startPrank(currentActor);
-        //     ustb.disableRebase(currentActor, flag);
-        // } else {
-        //     ghost_zeroAddressDisableRebase++;
-        // }
+        if (currentActor != address(0) && flag != ustb.isNotRebase(currentActor)) {
+            vm.startPrank(currentActor);
+            ustb.disableRebase(currentActor, flag);
+        } else {
+            ghost_zeroAddressDisableRebase++;
+        }
     }
 
     function transfer(uint256 actorSeed, uint256 toSeed, uint256 amount)
