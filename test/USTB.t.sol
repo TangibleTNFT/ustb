@@ -424,4 +424,106 @@ contract USTBTest is Test {
         vm.expectRevert(abi.encodeWithSelector(InvalidZeroAddress.selector));
         ustb.setRebaseIndexManager(address(0));
     }
+
+    /////////////////////////////// Failed Test ///////////////////////////////////
+
+    function test_ReturnWrongTotalSupplyAfterTokenTransferFromRebaseToNonRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+        usdm.transfer(bob, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(alice, 100e18);
+
+        vm.startPrank(bob);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.disableRebase(bob, true);
+        ustb.mint(bob, 100e18);
+
+        vm.roll(18349000);
+        vm.startPrank(usdmController);
+
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
+        assert(success);
+
+        vm.startPrank(indexManager);
+        ustb.refreshRebaseIndex(); // force update
+
+        vm.startPrank(alice);
+        uint256 balance1 = ustb.balanceOf(alice);
+
+        //////////////////////////// Shows Bug ////////////////////////////
+
+        console.log("Total supply before transferring tokens to bob", ustb.totalSupply());
+
+        uint256 totalSupplyBeforeTransfer = ustb.totalSupply();
+        ustb.transfer(bob, balance1);
+        uint256 totalSupplyAfterTransfer = ustb.totalSupply();
+
+        console.log("Total supply after transferring tokens to bob", ustb.totalSupply());
+
+        // totalSupplyBeforeTransfer is meant to be equal to totalSupplyAfterTransfer
+        // because tokens are only transferred between users not burnt/minted.
+        assertEq(totalSupplyBeforeTransfer, totalSupplyAfterTransfer);
+    }
+
+    function test_ReturnWrongTotalSupplyAfterTokenTransferFromNonRebaseToRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(bob, 100e18);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(bob);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.disableRebase(bob, true);
+        ustb.mint(bob, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(alice, 100e18);
+
+        vm.roll(18349000);
+        vm.startPrank(usdmController);
+
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
+        assert(success);
+
+        vm.startPrank(indexManager);
+        ustb.refreshRebaseIndex(); // force update
+
+        vm.startPrank(bob);
+        uint256 balance1 = ustb.balanceOf(bob);
+
+        //////////////////////////// Shows Bug ////////////////////////////
+
+        console.log("Total supply before transferring tokens to bob", ustb.totalSupply());
+
+        uint256 totalSupplyBeforeTransfer = ustb.totalSupply();
+        ustb.transfer(alice, balance1);
+        uint256 totalSupplyAfterTransfer = ustb.totalSupply();
+
+        console.log("Total supply after transferring tokens to bob", ustb.totalSupply());
+
+        // totalSupplyBeforeTransfer is meant to be equal to totalSupplyAfterTransfer
+        // because tokens are only transferred between users not burnt/minted.
+        assertEq(totalSupplyAfterTransfer, totalSupplyBeforeTransfer);
+    }
+
+    function test_shouldFailWhenSenderIsNonRebaseUser() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 1e18);
+
+        // user becomes non-rebase
+        ustb.disableRebase(usdmHolder, true);
+        ustb.mint(usdmHolder, 1e18);
+
+        uint256 nativeFee;
+        (nativeFee,) = ustb.estimateSendFee(uint16(block.chainid), abi.encodePacked(alice), 0.5e18, false, "");
+
+        ustb.sendFrom{value: (nativeFee * 105) / 100}(
+            usdmHolder, uint16(block.chainid), abi.encodePacked(alice), 0.5e18, payable(usdmHolder), address(0), ""
+        );
+    }
 }
