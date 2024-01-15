@@ -11,6 +11,12 @@ import "@layerzerolabs/contracts/lzApp/mocks/LZEndpointMock.sol";
 import "src/USTB.sol";
 
 contract USTBTest is Test {
+    event RebaseEnabled(address indexed account);
+    event RebaseDisabled(address indexed account);
+    event RebaseIndexManagerUpdated(address manager);
+    event RebaseIndexUpdated(address updatedBy, uint256 index);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
     error NotAuthorized(address caller);
     error InvalidZeroAddress();
     error ValueUnchanged();
@@ -526,4 +532,113 @@ contract USTBTest is Test {
             usdmHolder, uint16(block.chainid), abi.encodePacked(alice), 0.5e18, payable(usdmHolder), address(0), ""
         );
     }
+
+    //////////////////////////// Event Test ////////////////////////////
+
+    function test_setRebaseIndexManagerEvent() public {
+        vm.expectEmit();
+        emit RebaseIndexManagerUpdated(alice);
+
+        ustb.setRebaseIndexManager(alice);
+    }
+
+    function test_shouldEmitRebaseDisabled() public {
+        vm.startPrank(usdmHolder);
+        vm.expectEmit();
+
+        emit RebaseDisabled(usdmHolder);
+        ustb.disableRebase(usdmHolder, true);
+    }
+
+    function test_shouldEmitRebaseEnabled() public {
+        vm.startPrank(usdmHolder);
+        ustb.disableRebase(usdmHolder, true);
+
+        vm.expectEmit();
+
+        emit RebaseEnabled(usdmHolder);
+        ustb.disableRebase(usdmHolder, false);
+    }
+
+    function test_setRebaseIndexEvent() public {
+        vm.startPrank(indexManager);
+        vm.expectEmit();
+
+        emit RebaseIndexUpdated(indexManager, 2e18);
+        ustbChild.setRebaseIndex(2e18, 1);
+    }
+
+    function test_eventTransferFromRebaseToRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.mint(alice, 100e18);
+        uint256 balance = ustb.balanceOf(alice);
+        vm.expectEmit();
+
+        emit Transfer(alice, bob, balance);
+        ustb.transfer(bob, balance);
+    }
+
+    function test_eventTransferFromNonRebaseToNonRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(bob);
+        ustb.disableRebase(bob, true);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.disableRebase(alice, true);
+        ustb.mint(alice, 100e18);
+
+        uint256 balance = ustb.balanceOf(alice);
+        vm.expectEmit();
+
+        emit Transfer(alice, bob, balance);
+        ustb.transfer(bob, balance);
+    }
+
+    function test_eventTransferFromRebaseToNonRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(bob);
+        ustb.disableRebase(bob, true);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.mint(alice, 100e18);
+        uint256 balance = ustb.balanceOf(alice);
+        vm.expectEmit();
+
+        emit Transfer(alice, address(0), balance);
+        emit Transfer(address(0), bob, balance);
+        ustb.transfer(bob, balance);
+    }
+
+    function test_eventTransferFromNonRebaseToRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(alice);
+        ustb.disableRebase(alice, true);
+
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(alice, 100e18);
+
+        uint256 balance = ustb.balanceOf(alice);
+        vm.expectEmit();
+
+        emit Transfer(alice, address(0), balance);
+        emit Transfer(address(0), bob, balance);
+        ustb.transfer(bob, balance);
+    }
+
+    // ReceiveFromChain
 }
