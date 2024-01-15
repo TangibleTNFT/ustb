@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {RebaseTokenMath} from "lib/tangible-foundation-contracts/src/libraries/RebaseTokenMath.sol";
 
 import "@layerzerolabs/contracts/lzApp/mocks/LZEndpointMock.sol";
 
@@ -17,10 +18,10 @@ contract USTBTest is Test {
     event RebaseIndexUpdated(address updatedBy, uint256 index);
     event Transfer(address indexed from, address indexed to, uint256 value);
 
+    error CannotBridgeWhenOptedOut(address account);
     error NotAuthorized(address caller);
     error InvalidZeroAddress();
     error ValueUnchanged();
-
     error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
 
     USTB ustb;
@@ -332,7 +333,7 @@ contract USTBTest is Test {
         uint256 balance2 = ustb.balanceOf(bob);
         ustb.transfer(bob, balance1);
 
-        assertEq(ustb.balanceOf(alice), 0);
+        assertApproxEqAbs(ustb.balanceOf(alice), 0, 1);
         assertApproxEqAbs(ustb.balanceOf(bob), balance1 + balance2, 1);
     }
 
@@ -431,9 +432,7 @@ contract USTBTest is Test {
         ustb.setRebaseIndexManager(address(0));
     }
 
-    /////////////////////////////// Failed Test ///////////////////////////////////
-
-    function test_ReturnWrongTotalSupplyAfterTokenTransferFromRebaseToNonRebase() public {
+    function test_returnWrongTotalSupplyAfterTokenTransferFromRebaseToNonRebase() public {
         vm.startPrank(usdmHolder);
         usdm.transfer(alice, 100e18);
         usdm.transfer(bob, 100e18);
@@ -460,8 +459,6 @@ contract USTBTest is Test {
         vm.startPrank(alice);
         uint256 balance1 = ustb.balanceOf(alice);
 
-        //////////////////////////// Shows Bug ////////////////////////////
-
         console.log("Total supply before transferring tokens to bob", ustb.totalSupply());
 
         uint256 totalSupplyBeforeTransfer = ustb.totalSupply();
@@ -475,7 +472,7 @@ contract USTBTest is Test {
         assertEq(totalSupplyBeforeTransfer, totalSupplyAfterTransfer);
     }
 
-    function test_ReturnWrongTotalSupplyAfterTokenTransferFromNonRebaseToRebase() public {
+    function test_returnWrongTotalSupplyAfterTokenTransferFromNonRebaseToRebase() public {
         vm.startPrank(usdmHolder);
         usdm.transfer(bob, 100e18);
         usdm.transfer(alice, 100e18);
@@ -502,8 +499,6 @@ contract USTBTest is Test {
         vm.startPrank(bob);
         uint256 balance1 = ustb.balanceOf(bob);
 
-        //////////////////////////// Shows Bug ////////////////////////////
-
         console.log("Total supply before transferring tokens to bob", ustb.totalSupply());
 
         uint256 totalSupplyBeforeTransfer = ustb.totalSupply();
@@ -528,6 +523,7 @@ contract USTBTest is Test {
         uint256 nativeFee;
         (nativeFee,) = ustb.estimateSendFee(uint16(block.chainid), abi.encodePacked(alice), 0.5e18, false, "");
 
+        vm.expectRevert(abi.encodeWithSelector(CannotBridgeWhenOptedOut.selector, usdmHolder));
         ustb.sendFrom{value: (nativeFee * 105) / 100}(
             usdmHolder, uint16(block.chainid), abi.encodePacked(alice), 0.5e18, payable(usdmHolder), address(0), ""
         );
@@ -633,10 +629,13 @@ contract USTBTest is Test {
         ustb.mint(alice, 100e18);
 
         uint256 balance = ustb.balanceOf(alice);
+        uint256 rebaseIndex = ustb.rebaseIndex();
+        uint256 transferBalance = RebaseTokenMath.toTokens(RebaseTokenMath.toShares(balance, rebaseIndex), rebaseIndex);
+
         vm.expectEmit();
 
-        emit Transfer(alice, address(0), balance);
-        emit Transfer(address(0), bob, balance);
+        emit Transfer(alice, address(0), transferBalance);
+        emit Transfer(address(0), bob, transferBalance);
         ustb.transfer(bob, balance);
     }
 

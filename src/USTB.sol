@@ -28,6 +28,11 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
 
     address public immutable UNDERLYING;
 
+    /// @custom:storage-location erc7201:tangible.storage.USTB
+    struct USTBStorage {
+        address rebaseIndexManager;
+    }
+
     // keccak256(abi.encode(uint256(keccak256("tangible.storage.USTB")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant USTBStorageLocation = 0x56cb630b12f1f031f72de1d734e98085323517cc6515c1c85452dc02f218dd00;
 

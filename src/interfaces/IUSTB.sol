@@ -9,11 +9,6 @@ interface IUSTB {
     error UnsupportedChain(uint256 chainId);
     error ValueUnchanged();
 
-    /// @custom:storage-location erc7201:tangible.storage.USTB
-    struct USTBStorage {
-        address rebaseIndexManager;
-    }
-
     /**
      * Returns the underlying address.
      */
