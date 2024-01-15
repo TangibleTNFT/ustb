@@ -638,6 +638,4 @@ contract USTBTest is Test {
         emit Transfer(address(0), bob, transferBalance);
         ustb.transfer(bob, balance);
     }
-
-    // ReceiveFromChain
 }
