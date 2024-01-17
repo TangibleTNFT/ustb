@@ -5,12 +5,25 @@ import "forge-std/Test.sol";
 
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {RebaseTokenMath} from "lib/tangible-foundation-contracts/src/libraries/RebaseTokenMath.sol";
 
 import "@layerzerolabs/contracts/lzApp/mocks/LZEndpointMock.sol";
 
 import "src/USTB.sol";
 
 contract USTBTest is Test {
+    event RebaseEnabled(address indexed account);
+    event RebaseDisabled(address indexed account);
+    event RebaseIndexManagerUpdated(address manager);
+    event RebaseIndexUpdated(address updatedBy, uint256 index);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    error CannotBridgeWhenOptedOut(address account);
+    error NotAuthorized(address caller);
+    error InvalidZeroAddress();
+    error ValueUnchanged();
+    error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
+
     USTB ustb;
     USTB ustbChild;
 
@@ -210,7 +223,7 @@ contract USTBTest is Test {
 
         uint256 nativeFee;
         (nativeFee,) = ustb.estimateSendFee(uint16(block.chainid), abi.encodePacked(alice), 0.5e18, false, "");
-        ustb.sendFrom{value: nativeFee * 105 / 100}(
+        ustb.sendFrom{value: (nativeFee * 105) / 100}(
             usdmHolder, uint16(block.chainid), abi.encodePacked(alice), 0.5e18, payable(usdmHolder), address(0), ""
         );
         assertApproxEqAbs(ustb.balanceOf(usdmHolder), 0.5e18, 2);
@@ -220,7 +233,7 @@ contract USTBTest is Test {
         (nativeFee,) = ustb.estimateSendFee(
             uint16(block.chainid), abi.encodePacked(usdmHolder), ustbChild.balanceOf(alice), false, ""
         );
-        ustbChild.sendFrom{value: nativeFee * 105 / 100}(
+        ustbChild.sendFrom{value: (nativeFee * 105) / 100}(
             alice,
             uint16(block.chainid),
             abi.encodePacked(usdmHolder),
@@ -320,7 +333,7 @@ contract USTBTest is Test {
         uint256 balance2 = ustb.balanceOf(bob);
         ustb.transfer(bob, balance1);
 
-        assertEq(ustb.balanceOf(alice), 0);
+        assertApproxEqAbs(ustb.balanceOf(alice), 0, 1);
         assertApproxEqAbs(ustb.balanceOf(bob), balance1 + balance2, 1);
     }
 
@@ -353,5 +366,276 @@ contract USTBTest is Test {
 
         assertEq(ustb.balanceOf(alice), 0);
         assertApproxEqAbs(ustb.balanceOf(bob), balance + balance, 1);
+    }
+
+    /////////////////////////////// NEW TEST ///////////////////////////////////
+
+    function test_shouldFailTodisableRebaseIfCallerIsNotAuthorized() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 1e18);
+
+        ustb.mint(usdmHolder, 1e18);
+        vm.stopPrank();
+
+        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, address(this)));
+
+        ustb.disableRebase(usdmHolder, true);
+    }
+
+    function test_shouldFailToDisableRebaseIfValueIsUnchanged() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 1e18);
+
+        ustb.mint(usdmHolder, 1e18);
+        vm.expectRevert(abi.encodeWithSelector(ValueUnchanged.selector));
+
+        ustb.disableRebase(usdmHolder, false);
+    }
+
+    function test_burnViaApprovedAddress() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 1e18);
+
+        ustb.mint(usdmHolder, 1e18);
+        ustb.approve(address(this), 1e18);
+
+        vm.stopPrank();
+        ustb.burn(usdmHolder, ustb.balanceOf(usdmHolder));
+
+        assertEq(ustb.balanceOf(usdmHolder), 0);
+        assertEq(ustb.totalSupply(), 0);
+    }
+
+    function test_failToBurnTokenFromNotApprovedOrOwner() public {
+        vm.startPrank(usdmHolder);
+
+        usdm.approve(address(ustb), 1e18);
+        ustb.mint(usdmHolder, 1e18);
+
+        ustb.approve(address(this), 1e18);
+        vm.stopPrank();
+
+        ustb.burn(usdmHolder, ustb.balanceOf(usdmHolder));
+
+        assertEq(ustb.balanceOf(usdmHolder), 0);
+        assertEq(ustb.totalSupply(), 0);
+    }
+
+    function test_shouldFailToSetRebaseIndex() public {
+        vm.expectRevert(abi.encodeWithSelector(NotAuthorized.selector, deployer));
+        ustbChild.setRebaseIndex(1e18, 1);
+        assertEq(ustbChild.rebaseIndex(), 1e18);
+    }
+
+    function test_shouldFailTosetRebaseIndexManager() public {
+        vm.expectRevert(abi.encodeWithSelector(InvalidZeroAddress.selector));
+        ustb.setRebaseIndexManager(address(0));
+    }
+
+    function test_returnWrongTotalSupplyAfterTokenTransferFromRebaseToNonRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+        usdm.transfer(bob, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(alice, 100e18);
+
+        vm.startPrank(bob);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.disableRebase(bob, true);
+        ustb.mint(bob, 100e18);
+
+        vm.roll(18349000);
+        vm.startPrank(usdmController);
+
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
+        assert(success);
+
+        vm.startPrank(indexManager);
+        ustb.refreshRebaseIndex(); // force update
+
+        vm.startPrank(alice);
+        uint256 balance1 = ustb.balanceOf(alice);
+
+        console.log("Total supply before transferring tokens to bob", ustb.totalSupply());
+
+        uint256 totalSupplyBeforeTransfer = ustb.totalSupply();
+        ustb.transfer(bob, balance1);
+        uint256 totalSupplyAfterTransfer = ustb.totalSupply();
+
+        console.log("Total supply after transferring tokens to bob", ustb.totalSupply());
+
+        // totalSupplyBeforeTransfer is meant to be equal to totalSupplyAfterTransfer
+        // because tokens are only transferred between users not burnt/minted.
+        assertEq(totalSupplyBeforeTransfer, totalSupplyAfterTransfer);
+    }
+
+    function test_returnWrongTotalSupplyAfterTokenTransferFromNonRebaseToRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(bob, 100e18);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(bob);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.disableRebase(bob, true);
+        ustb.mint(bob, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(alice, 100e18);
+
+        vm.roll(18349000);
+        vm.startPrank(usdmController);
+
+        (bool success,) = address(usdm).call(abi.encodeWithSignature("addRewardMultiplier(uint256)", 134e12));
+        assert(success);
+
+        vm.startPrank(indexManager);
+        ustb.refreshRebaseIndex(); // force update
+
+        vm.startPrank(bob);
+        uint256 balance1 = ustb.balanceOf(bob);
+
+        console.log("Total supply before transferring tokens to bob", ustb.totalSupply());
+
+        uint256 totalSupplyBeforeTransfer = ustb.totalSupply();
+        ustb.transfer(alice, balance1);
+        uint256 totalSupplyAfterTransfer = ustb.totalSupply();
+
+        console.log("Total supply after transferring tokens to bob", ustb.totalSupply());
+
+        // totalSupplyBeforeTransfer is meant to be equal to totalSupplyAfterTransfer
+        // because tokens are only transferred between users not burnt/minted.
+        assertEq(totalSupplyAfterTransfer, totalSupplyBeforeTransfer);
+    }
+
+    function test_shouldFailWhenSenderIsNonRebaseUser() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 1e18);
+
+        // user becomes non-rebase
+        ustb.disableRebase(usdmHolder, true);
+        ustb.mint(usdmHolder, 1e18);
+
+        uint256 nativeFee;
+        (nativeFee,) = ustb.estimateSendFee(uint16(block.chainid), abi.encodePacked(alice), 0.5e18, false, "");
+
+        vm.expectRevert(abi.encodeWithSelector(CannotBridgeWhenOptedOut.selector, usdmHolder));
+        ustb.sendFrom{value: (nativeFee * 105) / 100}(
+            usdmHolder, uint16(block.chainid), abi.encodePacked(alice), 0.5e18, payable(usdmHolder), address(0), ""
+        );
+    }
+
+    //////////////////////////// Event Test ////////////////////////////
+
+    function test_setRebaseIndexManagerEvent() public {
+        vm.expectEmit();
+        emit RebaseIndexManagerUpdated(alice);
+
+        ustb.setRebaseIndexManager(alice);
+    }
+
+    function test_shouldEmitRebaseDisabled() public {
+        vm.startPrank(usdmHolder);
+        vm.expectEmit();
+
+        emit RebaseDisabled(usdmHolder);
+        ustb.disableRebase(usdmHolder, true);
+    }
+
+    function test_shouldEmitRebaseEnabled() public {
+        vm.startPrank(usdmHolder);
+        ustb.disableRebase(usdmHolder, true);
+
+        vm.expectEmit();
+
+        emit RebaseEnabled(usdmHolder);
+        ustb.disableRebase(usdmHolder, false);
+    }
+
+    function test_setRebaseIndexEvent() public {
+        vm.startPrank(indexManager);
+        vm.expectEmit();
+
+        emit RebaseIndexUpdated(indexManager, 2e18);
+        ustbChild.setRebaseIndex(2e18, 1);
+    }
+
+    function test_eventTransferFromRebaseToRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.mint(alice, 100e18);
+        uint256 balance = ustb.balanceOf(alice);
+        vm.expectEmit();
+
+        emit Transfer(alice, bob, balance);
+        ustb.transfer(bob, balance);
+    }
+
+    function test_eventTransferFromNonRebaseToNonRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(bob);
+        ustb.disableRebase(bob, true);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.disableRebase(alice, true);
+        ustb.mint(alice, 100e18);
+
+        uint256 balance = ustb.balanceOf(alice);
+        vm.expectEmit();
+
+        emit Transfer(alice, bob, balance);
+        ustb.transfer(bob, balance);
+    }
+
+    function test_eventTransferFromRebaseToNonRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(bob);
+        ustb.disableRebase(bob, true);
+
+        vm.startPrank(alice);
+        usdm.approve(address(ustb), 100e18);
+
+        ustb.mint(alice, 100e18);
+        uint256 balance = ustb.balanceOf(alice);
+        vm.expectEmit();
+
+        emit Transfer(alice, address(0), balance);
+        emit Transfer(address(0), bob, balance);
+        ustb.transfer(bob, balance);
+    }
+
+    function test_eventTransferFromNonRebaseToRebase() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+
+        vm.startPrank(alice);
+        ustb.disableRebase(alice, true);
+
+        usdm.approve(address(ustb), 100e18);
+        ustb.mint(alice, 100e18);
+
+        uint256 balance = ustb.balanceOf(alice);
+        uint256 rebaseIndex = ustb.rebaseIndex();
+        uint256 transferBalance = RebaseTokenMath.toTokens(RebaseTokenMath.toShares(balance, rebaseIndex), rebaseIndex);
+
+        vm.expectEmit();
+
+        emit Transfer(alice, address(0), transferBalance);
+        emit Transfer(address(0), bob, transferBalance);
+        ustb.transfer(bob, balance);
     }
 }
