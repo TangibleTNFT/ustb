@@ -2,7 +2,7 @@
 
 ## Overview
 
-The USTB Token project is a Solidity-based smart contract system designed to provide a rebase token with cross-chain and Layer Zero functionalities. It's built with upgradeability in mind, ensuring that the token logic can evolve over time.
+The USTB Token project is a Solidity-based smart contract system designed to provide a rebase token with cross-chain and Layer Zero functionalities. It's built with upgradeability in mind, ensuring that the token logic can evolve.
 
 ## Key Components
 
