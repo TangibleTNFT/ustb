@@ -129,7 +129,7 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
         } else if (chain == keccak256("polygon_mumbai")) {
             return 10109;
         } else if (chain == keccak256("unreal")) {
-            return 0; // TODO
+            return 10252;
         } else {
             revert("Unsupported chain");
         }
@@ -165,11 +165,11 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
         } else if (chainId == getChain("goerli").chainId) {
             lzEndpoint = 0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23;
         } else if (chainId == getChain("sepolia").chainId) {
-            lzEndpoint = 0x6098e96a28E02f27B1e6BD381f870F1C8Bd169d3;
+            lzEndpoint = 0xae92d5aD7583AD66E49A0c67BAd18F6ba52dDDc1;
         } else if (chainId == getChain("polygon_mumbai").chainId) {
             lzEndpoint = 0xf69186dfBa60DdB133E91E9A4B5673624293d8F8;
         } else if (chainId == getChain("unreal").chainId) {
-            lzEndpoint = address(0); // TODO
+            lzEndpoint = 0x2cA20802fd1Fd9649bA8Aa7E50F0C82b479f35fe;
         } else {
             revert("No LayerZero endpoint defined for this chain.");
         }

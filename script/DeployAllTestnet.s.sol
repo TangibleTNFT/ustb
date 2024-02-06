@@ -6,17 +6,17 @@ import {DeployAllBase} from "./base/DeployAllBase.sol";
 // FOUNDRY_PROFILE=optimized forge script ./script/DeployAllTestnet.s.sol --broadcast
 contract DeployAll is DeployAllBase {
     function _getUSDMAddress() internal pure override returns (address) {
-        return 0xe31Cf614fC1C5d3781d9E09bdb2e04134CDebb89;
+        return 0x13613fb95931D7cC2F1ae3E30e5090220f818032;
     }
 
     function _getMainChainAlias() internal pure override returns (string memory) {
-        return "goerli";
+        return "sepolia";
     }
 
     function _getDeploymentChainAliases() internal pure override returns (string[] memory aliases) {
         aliases = new string[](3);
         aliases[0] = "unreal";
         aliases[1] = "polygon_mumbai";
-        aliases[2] = "goerli";
+        aliases[2] = "sepolia";
     }
 }
