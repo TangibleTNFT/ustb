@@ -74,7 +74,7 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     /// @inheritdoc IUSTB
-    function initialize(address indexManager) external reinitializer(2) {
+    function initialize(address indexManager) external initializer {
         __LayerZeroRebaseToken_init(msg.sender, "US T-Bill", "USTB");
         if (isMainChain) {
             refreshRebaseIndex();
