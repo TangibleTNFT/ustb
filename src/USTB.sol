@@ -142,10 +142,6 @@ contract USTB is IUSTB, LayerZeroRebaseTokenUpgradeable, UUPSUpgradeable {
         emit RebaseIndexManagerUpdated(manager);
     }
 
-    function isNotRebase(address account) external view returns (bool) {
-        return _isRebaseDisabled(account);
-    }
-
     /**
      * @notice Updates the state of the contract during token transfers, mints, or burns.
      * @dev This override function performs an additional check to update the rebase index if the contract is on the
