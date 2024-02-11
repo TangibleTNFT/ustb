@@ -51,16 +51,10 @@ contract USTBTest is Test {
         vm.startPrank(deployer);
 
         uint16 mainChainId = uint16(block.chainid);
-        uint16 sideChainId = mainChainId + 1;
 
         LZEndpointMock lzEndpoint = new LZEndpointMock(mainChainId);
         USTB main = new USTB(usdmAddress, mainChainId, address(lzEndpoint));
-
-        vm.chainId(sideChainId);
-
-        USTB child = new USTB(usdmAddress, mainChainId, address(lzEndpoint));
-
-        vm.chainId(mainChainId);
+        USTB child = new USTB(usdmAddress, mainChainId + 1, address(lzEndpoint));
 
         usdm = IERC20(main.UNDERLYING());
 
@@ -68,21 +62,17 @@ contract USTBTest is Test {
             new ERC1967Proxy(address(main), abi.encodeWithSelector(USTB.initialize.selector, indexManager));
         ustb = USTB(address(mainProxy));
 
-        vm.chainId(sideChainId);
-
         ERC1967Proxy childProxy =
             new ERC1967Proxy(address(child), abi.encodeWithSelector(USTB.initialize.selector, indexManager));
         ustbChild = USTB(address(childProxy));
-
-        vm.chainId(mainChainId);
 
         vm.label(address(ustbChild), "USTB (child chain)");
 
         lzEndpoint.setDestLzEndpoint(address(ustb), address(lzEndpoint));
         lzEndpoint.setDestLzEndpoint(address(ustbChild), address(lzEndpoint));
 
-        bytes memory ustbAddress = abi.encodePacked(uint160(address(ustb)));
-        bytes memory ustbChildAddress = abi.encodePacked(uint160(address(ustbChild)));
+        bytes memory ustbAddress = abi.encodePacked(address(ustb));
+        bytes memory ustbChildAddress = abi.encodePacked(address(ustbChild));
 
         ustb.setTrustedRemoteAddress(mainChainId, ustbChildAddress);
         ustbChild.setTrustedRemoteAddress(mainChainId, ustbAddress);

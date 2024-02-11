@@ -18,25 +18,18 @@ contract USTBInvariants is Test {
 
     function setUp() public {
         uint16 mainChainId = uint16(block.chainid);
-        uint16 sideChainId = mainChainId + 1;
 
         usdm = new USDM();
 
         LZEndpointMock lzEndpoint = new LZEndpointMock(mainChainId);
         ustb = new USTB(address(usdm), mainChainId, address(lzEndpoint));
 
-        vm.chainId(sideChainId);
-
-        USTB child = new USTB(address(usdm), mainChainId, address(lzEndpoint));
-
-        vm.chainId(mainChainId);
+        USTB child = new USTB(address(usdm), mainChainId + 1, address(lzEndpoint));
 
         ERC1967Proxy mainProxy =
             new ERC1967Proxy(address(ustb), abi.encodeWithSelector(USTB.initialize.selector, address(2)));
 
         ustb = USTB(address(mainProxy));
-
-        vm.chainId(sideChainId);
 
         ERC1967Proxy childProxy =
             new ERC1967Proxy(address(child), abi.encodeWithSelector(USTB.initialize.selector, address(2)));
