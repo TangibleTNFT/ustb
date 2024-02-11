@@ -50,7 +50,7 @@ FOUNDRY_PROFILE=optimized ETHERSCAN_API_KEY=${ETHERSCAN_POLYGON_KEY} forge verif
     --watch \
     --constructor-args $(cast abi-encode "constructor(address,uint256,address)" ${USDM_ADDRESS} ${SEPOLIA_CHAIN_ID} ${LZ_ENDPOINT_MUMBAI})
 
-FOUNDRY_PROFILE=optimized forge verify-contract ${USDR_ADDRESS} \
+FOUNDRY_PROFILE=optimized forge verify-contract ${USDR_IMPLEMENTATION_ADDRESS_UNREAL} \
     src/USTB.sol:USTB \
     --chain-id 18231 \
     --watch \

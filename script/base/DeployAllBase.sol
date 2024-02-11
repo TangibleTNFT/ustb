@@ -121,7 +121,7 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
         } else if (chain == keccak256("base")) {
             return 184;
         } else if (chain == keccak256("real")) {
-            return 0; // TODO
+            revert("Unsupported chain");
         } else if (chain == keccak256("goerli")) {
             return 10121;
         } else if (chain == keccak256("sepolia")) {
@@ -161,7 +161,7 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
         } else if (chainId == getChain("base").chainId) {
             lzEndpoint = 0xb6319cC6c8c27A8F5dAF0dD3DF91EA35C4720dd7;
         } else if (chainId == getChain("real").chainId) {
-            lzEndpoint = address(0); // TODO
+            revert("No LayerZero endpoint defined for this chain.");
         } else if (chainId == getChain("goerli").chainId) {
             lzEndpoint = 0xbfD2135BFfbb0B5378b56643c2Df8a87552Bfa23;
         } else if (chainId == getChain("sepolia").chainId) {
