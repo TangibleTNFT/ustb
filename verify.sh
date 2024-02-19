@@ -15,7 +15,7 @@ ARBITRUM_SEPOLIA_CHAIN_ID=421614
 USDR_IMPLEMENTATION_ADDRESS_SEPOLIA=$(cast implementation ${USDR_ADDRESS} --rpc-url sepolia)
 USDR_IMPLEMENTATION_ADDRESS_MUMBAI=$(cast implementation ${USDR_ADDRESS} --rpc-url polygon_mumbai)
 USDR_IMPLEMENTATION_ADDRESS_UNREAL=$(cast implementation ${USDR_ADDRESS} --rpc-url unreal)
-USDR_IMPLEMENTATION_ADDRESS_ARBITRUM_SEPOLIA=$(cast implementation ${USDR_ADDRESS} --rpc-url arbitrum_sepolia)
+USDR_IMPLEMENTATION_ADDRESS_ARBITRUM_SEPOLIA=$(cast implementation ${USDR_ADDRESS} --rpc-url arbitrum_one_sepolia)
 
 LZ_ENDPOINT_SEPOLIA=0xae92d5aD7583AD66E49A0c67BAd18F6ba52dDDc1
 LZ_ENDPOINT_MUMBAI=0xf69186dfBa60DdB133E91E9A4B5673624293d8F8
@@ -36,7 +36,7 @@ FOUNDRY_PROFILE=optimized ETHERSCAN_API_KEY=${ETHERSCAN_POLYGON_KEY} forge verif
 
 FOUNDRY_PROFILE=optimized forge verify-contract ${USDR_ADDRESS} \
     lib/tangible-foundation-contracts/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol:ERC1967Proxy \
-    --chain-id 18231 \
+    --chain-id ${UNREAL_CHAIN_ID} \
     --watch \
     --verifier blockscout \
     --verifier-url "https://unreal.blockscout.com/api"
@@ -61,7 +61,7 @@ FOUNDRY_PROFILE=optimized ETHERSCAN_API_KEY=${ETHERSCAN_POLYGON_KEY} forge verif
 
 FOUNDRY_PROFILE=optimized forge verify-contract ${USDR_IMPLEMENTATION_ADDRESS_UNREAL} \
     src/USTB.sol:USTB \
-    --chain-id 18231 \
+    --chain-id ${UNREAL_CHAIN_ID} \
     --watch \
     --verifier blockscout \
     --verifier-url "https://unreal.blockscout.com/api"
