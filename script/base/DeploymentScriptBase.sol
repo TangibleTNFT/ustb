@@ -84,6 +84,7 @@ abstract contract DeploymentScriptBase is Script {
         _loadPrivateKey();
         setChain("unreal", ChainData("Unreal Chain", 18231, "https://rpc.unreal.gelato.digital"));
         setChain("real", ChainData("Real Chain", 888, "https://rpc.real.gelato.digital"));
+        setChain("arbitrum_one_sepolia", ChainData("Arbitrum One Sepolia", 421614, "https://sepolia-rollup.arbitrum.io/rpc"));
     }
 
     /**

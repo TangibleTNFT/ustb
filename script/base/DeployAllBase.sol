@@ -130,6 +130,8 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
             return 10109;
         } else if (chain == keccak256("unreal")) {
             return 10252;
+        } else if (chain == keccak256("arbitrum_one_sepolia")) {
+            return 10231;
         } else {
             revert("Unsupported chain");
         }
@@ -170,6 +172,8 @@ abstract contract DeployAllBase is TangibleDeploymentScript {
             lzEndpoint = 0xf69186dfBa60DdB133E91E9A4B5673624293d8F8;
         } else if (chainId == getChain("unreal").chainId) {
             lzEndpoint = 0x2cA20802fd1Fd9649bA8Aa7E50F0C82b479f35fe;
+        } else if (chainId == getChain("arbitrum_one_sepolia").chainId) {
+            lzEndpoint = 0x6098e96a28E02f27B1e6BD381f870F1C8Bd169d3;
         } else {
             revert("No LayerZero endpoint defined for this chain.");
         }

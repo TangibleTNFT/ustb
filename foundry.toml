@@ -26,15 +26,17 @@ goerli = "${GOERLI_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
 polygon_mumbai = "${MUMBAI_RPC_URL}"
 unreal = "${UNREAL_RPC_URL}"
+arbitrum_one_sepolia = "${ARBITRUM_ONE_SEPOLIA_RPC_URL}"
 
 [etherscan]
 mainnet = { key = "${ETHERSCAN_MAINNET_KEY}" }
 #bnb_smart_chain = { key = "${ETHERSCAN_BSC_KEY}" }
 polygon = { key = "${ETHERSCAN_POLYGON_KEY}" }
-#arbitrum_one = { key = "${ETHERSCAN_ARBITRUM_KEY}" }
+arbitrum = { key = "${ETHERSCAN_ARBITRUM_KEY}" }
 optimism = { key = "${ETHERSCAN_OPTIMISM_KEY}" }
 base = { key = "${ETHERSCAN_BASE_KEY}" }
 unreal = { key = "", url = "https://unreal.blockscout.com/api" }
+arbitrum_one_sepolia = { key = "${ETHERSCAN_ARBITRUM_KEY}", url="https://api-sepolia.arbiscan.io/api" }
 
 [fmt]
 wrap_comments = true
