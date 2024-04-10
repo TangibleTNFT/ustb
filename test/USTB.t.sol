@@ -15,7 +15,7 @@ contract USTBTest is Test {
     event RebaseEnabled(address indexed account);
     event RebaseDisabled(address indexed account);
     event RebaseIndexManagerUpdated(address manager);
-    event RebaseIndexUpdated(address updatedBy, uint256 index);
+    event RebaseIndexUpdated(address updatedBy, uint256 index, uint256 totalSupplyBefore, uint256 totalSupplyAfter);
     event Transfer(address indexed from, address indexed to, uint256 value);
 
     error CannotBridgeWhenOptedOut(address account);
@@ -550,7 +550,7 @@ contract USTBTest is Test {
         vm.startPrank(indexManager);
         vm.expectEmit();
 
-        emit RebaseIndexUpdated(indexManager, 2e18);
+        emit RebaseIndexUpdated(indexManager, 2e18, 0, 0);
         ustbChild.setRebaseIndex(2e18, 1);
     }
 
@@ -627,5 +627,46 @@ contract USTBTest is Test {
         emit Transfer(alice, address(0), transferBalance);
         emit Transfer(address(0), bob, transferBalance);
         ustb.transfer(bob, balance);
+    }
+
+    function test_eventTransferOnMint() public {
+        vm.startPrank(usdmHolder);
+        usdm.transfer(alice, 100e18);
+        usdm.transfer(bob, 100e18);
+
+        vm.startPrank(alice);
+        ustb.disableRebase(alice, true);
+        usdm.approve(address(ustb), 100e18);
+
+        vm.expectEmit();
+        emit Transfer(address(0), alice, 100e18);
+        ustb.mint(alice, 100e18);
+
+        vm.startPrank(bob);
+        usdm.approve(address(ustb), 100e18);
+
+        vm.expectEmit();
+        emit Transfer(address(0), bob, 100e18 - 1);
+        ustb.mint(bob, 100e18);
+    }
+
+    function test_eventTransferOnBurn() public {
+        vm.startPrank(usdmHolder);
+        usdm.approve(address(ustb), 200e18);
+        ustb.mint(alice, 100e18);
+        ustb.mint(bob, 100e18);
+
+        vm.startPrank(alice);
+        ustb.disableRebase(alice, true);
+
+        vm.expectEmit();
+        emit Transfer(alice, address(0), 100e18 - 1);
+        ustb.burn(alice, 100e18);
+
+        vm.startPrank(bob);
+
+        vm.expectEmit();
+        emit Transfer(bob, address(0), 100e18 - 1);
+        ustb.burn(bob, 100e18 - 1);
     }
 }

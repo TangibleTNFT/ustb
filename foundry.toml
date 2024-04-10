@@ -8,19 +8,14 @@ optimizer_runs = 10_000
 via_ir = true
 bytecode_hash = "none"
 
-[profile.optimized]
-optimizer_runs = 10_000
-via_ir = true
-bytecode_hash = "none"
-
 [rpc_endpoints]
 mainnet = "${ETHEREUM_RPC_URL}"
-#bnb_smart_chain = "${BSC_RPC_URL}"
 polygon = "${POLYGON_RPC_URL}"
-#arbitrum_one = "${ARBITRUM_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"
 base = "${BASE_RPC_URL}"
 real = "${REAL_RPC_URL}"
+#bnb_smart_chain = "${BSC_RPC_URL}"
+#arbitrum_one = "${ARBITRUM_RPC_URL}"
 
 goerli = "${GOERLI_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
@@ -29,14 +24,14 @@ unreal = "${UNREAL_RPC_URL}"
 arbitrum_one_sepolia = "${ARBITRUM_ONE_SEPOLIA_RPC_URL}"
 
 [etherscan]
+unreal = { key = "", url = "https://unreal.blockscout.com/api" }
+
 mainnet = { key = "${ETHERSCAN_MAINNET_KEY}" }
-#bnb_smart_chain = { key = "${ETHERSCAN_BSC_KEY}" }
 polygon = { key = "${ETHERSCAN_POLYGON_KEY}" }
-arbitrum = { key = "${ETHERSCAN_ARBITRUM_KEY}" }
 optimism = { key = "${ETHERSCAN_OPTIMISM_KEY}" }
 base = { key = "${ETHERSCAN_BASE_KEY}" }
-unreal = { key = "", url = "https://unreal.blockscout.com/api" }
-arbitrum_one_sepolia = { key = "${ETHERSCAN_ARBITRUM_KEY}", url="https://api-sepolia.arbiscan.io/api" }
+arbitrum = { key = "${ETHERSCAN_ARBITRUM_KEY}" }
+#bnb_smart_chain = { key = "${ETHERSCAN_BSC_KEY}" }
 
 [fmt]
 wrap_comments = true
